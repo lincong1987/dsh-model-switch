@@ -1,7 +1,7 @@
 {
   "name": "dsh-model-switch",
-  "version": "0.1.0",
-  "description": "DSH plugin: flexible model switch for sub-agent and plan execution",
+  "version": "0.2.0",
+  "description": "DSH plugin: choose models for subagents and plan execution separately",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
@@ -19,6 +19,7 @@
   },
   "files": [
     "lib",
+    "docs",
     "cordis.patch.yml",
     "README.md",
     "README.zh.md",

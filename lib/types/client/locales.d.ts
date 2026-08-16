@@ -12,6 +12,13 @@ export declare const zh: {
     modelLabel: string;
     effortLabel: string;
     effortDefault: string;
+    triggerFallback: string;
+    triggerSelectAria: string;
+    menuAria: string;
+    statusLoading: string;
+    emptyModels: string;
+    emptyEfforts: string;
+    retry: string;
     noSession: string;
     loadError: string;
     saveError: string;
@@ -34,6 +41,13 @@ export declare const en: {
     modelLabel: string;
     effortLabel: string;
     effortDefault: string;
+    triggerFallback: string;
+    triggerSelectAria: string;
+    menuAria: string;
+    statusLoading: string;
+    emptyModels: string;
+    emptyEfforts: string;
+    retry: string;
     noSession: string;
     loadError: string;
     saveError: string;

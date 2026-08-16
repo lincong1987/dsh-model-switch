@@ -8,6 +8,8 @@ export { resolveCustomSelection, resolvePlanExecuteSelection, } from './shared.t
 export type { Config as ModelSwitchConfig } from './shared.ts';
 export { ConfigSchema, MODEL_SWITCH_SETTINGS_NAMESPACE };
 export { CONFIG_ROUTE } from './config-http.ts';
+export { SESSION_LABELS_ROUTE } from './label.ts';
+export { formatModelLabel, formatContextWindow } from './label.ts';
 /** Schemastery Config export expected by DSH plugin loaders. */
 export declare const Config: import("@deepseek-ai/schemastery").default<ModelSwitchConfig>;
 export declare const name = "model-switch";

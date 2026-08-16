@@ -1,0 +1,248 @@
+.root {
+  position: relative;
+  min-width: 0;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 220px;
+  height: 28px;
+  padding: 0 4px 0 8px;
+  border: none;
+  border-radius: 24px;
+  outline: none;
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.trigger:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.trigger:focus-visible {
+  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+}
+
+.trigger:disabled {
+  color: var(--dsw-alias-label-dimmed);
+  cursor: default;
+}
+
+.triggerLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.triggerEffort {
+  flex: 0 0 auto;
+  color: var(--dsw-alias-label-caption);
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: var(--dsw-alias-label-caption);
+  transition: transform 120ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.menu {
+  position: absolute;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: min(240px, calc(100vw - 32px));
+  max-height: min(360px, calc(100vh - 96px));
+  overflow: hidden;
+  padding: 4px;
+  border: 1px solid var(--dsw-alias-border-inverted);
+  border-radius: 12px;
+  background: var(--dsw-specific-menu);
+  box-shadow: var(--dsw-shadow-lv3);
+  color: var(--dsw-alias-label-primary);
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+.menuTop {
+  right: 0;
+  bottom: calc(100% + 8px);
+}
+
+.menuBottom {
+  left: 0;
+  top: calc(100% + 8px);
+}
+
+.status,
+.empty {
+  padding: 10px;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.error {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  background: var(--dsw-alias-interactive-bg-hover-danger);
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.retry {
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.groups {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.group + .group {
+  margin-top: 4px;
+}
+
+.groupTitle {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 5px 8px 3px;
+  background: var(--dsw-specific-menu);
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 10px;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover:not(:disabled),
+.option:focus-visible {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.option:disabled {
+  color: var(--dsw-alias-label-dimmed);
+  cursor: default;
+}
+
+.optionCopy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.modelName {
+  overflow: hidden;
+  color: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description {
+  overflow: hidden;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  flex: 0 0 18px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.cell:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.cellLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellValue {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.cellChevron {
+  flex: 0 0 auto;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.muted {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--dsw-alias-label-tertiary, #666);
+}

@@ -1,5 +1,6 @@
 /**
- * Compact model catalog picker (settings + plan panel). Loads via session.models.
+ * Compact model catalog picker (settings + plan panel).
+ * Visual/UX mirrors conversation.input.model (ModelSelect); selection is local.
  */
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client';
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client';
@@ -13,5 +14,7 @@ export interface ModelPickerProps {
     t: (key: LocaleKey) => string;
     disabled?: boolean;
     className?: string;
+    /** Menu opens above (composer/plan) or below (settings). */
+    placement?: 'top' | 'bottom';
 }
-export declare function ModelPicker({ sessionId, api, value, onChange, t, disabled, className, }: ModelPickerProps): import("react").JSX.Element;
+export declare function ModelPicker({ sessionId, api, value, onChange, t, disabled, className, placement, }: ModelPickerProps): import("react").JSX.Element;

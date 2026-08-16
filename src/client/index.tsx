@@ -1,8 +1,8 @@
 /**
- * Browser half of dsh-model-switch: settings section + plan-review composer takeover.
+ * Browser half of dsh-model-switch: settings, plan-review, subagent model badges.
  */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SessionId, SubagentAddress } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
@@ -17,10 +17,18 @@ import {
   selectPlanReview,
   type PlanReviewComposerInjected,
 } from './PlanReviewComposer.tsx'
+import { SubagentModelBadge, type SubagentModelBadgeInjected } from './SubagentModelBadge.tsx'
+import {
+  SubagentCatalogAction,
+  type SubagentCatalogInjected,
+} from './SubagentCatalogAction.tsx'
+import { SessionLabelStore } from './session-label-store.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'model-switch': LocaleKey
+    /** Reuse stock ui-subagent dictionaries when replacing the catalog seat. */
+    'subagent': string
   }
 }
 
@@ -39,6 +47,7 @@ export function apply(ctx: ClientContext): void {
   const t = ctx.locale.bind(NS) as (key: LocaleKey) => string
   const connection = ctx.get('connection') as ConnectionHandle
   const store = new ConfigStore()
+  const labels = new SessionLabelStore()
 
   const settingsInject = (): SettingsInjected => ({
     store,
@@ -59,6 +68,9 @@ export function apply(ctx: ClientContext): void {
     store,
     api: connection.api,
     t,
+    isSessionRunning: (sessionId: SessionId) => (
+      ctx.sessions.list.getSnapshot().byId[sessionId]?.running === true
+    ),
   })
 
   ctx.slots.inject('conversation.composer', () => ctx.slots.register({
@@ -68,4 +80,37 @@ export function apply(ctx: ClientContext): void {
     locale: NS,
     inject: planInject,
   }, PlanReviewComposer))
+
+  const badgeInject = (): SubagentModelBadgeInjected => ({ labels })
+
+  // Sits beside the hierarchy crumbs (header.actions is the neighbour of 会话层级).
+  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
+    name: 'conversation.session.header.actions',
+    id: 'model-switch-badge',
+    order: 5,
+    inject: badgeInject,
+  }, SubagentModelBadge))
+
+  const catalogInject = (_parentSessionId: SessionId): SubagentCatalogInjected => ({
+    openChild(address: SubagentAddress) {
+      ctx.sessions.openSubagent(address)
+    },
+    refresh(parentSessionId: SessionId) {
+      void ctx.sessions.refreshSubagents(parentSessionId)
+    },
+    setCatalogOpen(parentSessionId: SessionId, open: boolean) {
+      ctx.sessions.setSubagentCatalogOpen(parentSessionId, open)
+    },
+    labels,
+  })
+
+  // Same id as stock ui-subagent entry; lower priority shadows it (lowest renders).
+  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
+    name: 'conversation.session.header.actions',
+    id: 'subagent-catalog',
+    order: 10,
+    priority: -1,
+    locale: 'subagent',
+    inject: catalogInject,
+  }, SubagentCatalogAction))
 }

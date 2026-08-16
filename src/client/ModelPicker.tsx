@@ -1,14 +1,23 @@
 /**
- * Compact model catalog picker (settings + plan panel). Loads via session.models.
+ * Compact model catalog picker (settings + plan panel).
+ * Visual/UX mirrors conversation.input.model (ModelSelect); selection is local.
  */
 
-import { useEffect, useMemo, useState } from 'react'
+import {
+  useEffect, useId, useMemo, useRef, useState,
+  type FocusEvent, type KeyboardEvent,
+} from 'react'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type { ModelSelection, SessionModels } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SessionModels } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import {
+  IconCheckOutline16,
+  IconChevronDownOutline14,
+  IconChevronRightOutline14,
+} from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ModelSelectionConfig } from '../shared.ts'
 import type { LocaleKey } from './locales.ts'
-import css from './styles.module.css'
+import css from './ModelPicker.module.css'
 
 export interface ModelPickerProps {
   sessionId: SessionId | undefined
@@ -18,28 +27,77 @@ export interface ModelPickerProps {
   t: (key: LocaleKey) => string
   disabled?: boolean
   className?: string
+  /** Menu opens above (composer/plan) or below (settings). */
+  placement?: 'top' | 'bottom'
 }
 
-function sameSelection(a: ModelSelectionConfig | undefined, b: ModelSelection): boolean {
-  return a?.provider === b.provider
-    && a.model === b.model
-    && (a.reasoningEffort ?? undefined) === (b.reasoningEffort ?? undefined)
+type Pane = 'root' | 'model' | 'effort'
+
+interface EffortChoice {
+  key: string
+  effort: string | undefined
+  label: string
+  description?: string
 }
 
 export function ModelPicker({
   sessionId, api, value, onChange, t, disabled, className,
+  placement = 'bottom',
 }: ModelPickerProps) {
   const [catalog, setCatalog] = useState<SessionModels | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [pane, setPane] = useState<Pane>('root')
+  const rootRef = useRef<HTMLDivElement | null>(null)
+  const triggerRef = useRef<HTMLButtonElement | null>(null)
+  const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const valueRef = useRef(value)
+  const onChangeRef = useRef(onChange)
+  const id = useId()
 
-  useEffect(() => {
+  valueRef.current = value
+  onChangeRef.current = onChange
+
+  const seedFromCurrent = (current: SessionModels['current']): void => {
+    if (valueRef.current !== undefined) return
+    if (!current.provider || !current.model) return
+    onChangeRef.current({
+      provider: current.provider,
+      model: current.model,
+      ...current.reasoningEffort === undefined ? {} : { reasoningEffort: current.reasoningEffort },
+    })
+  }
+
+  const load = (): void => {
     if (sessionId === undefined) {
       setCatalog(null)
       setError(null)
       return
     }
+    setLoading(true)
+    setError(null)
+    void api.sessions.models({ sessionId }).then(({ result }) => {
+      setLoading(false)
+      if (!result.ok) {
+        setError(`${result.error.code}: ${result.error.message}`)
+        return
+      }
+      setCatalog(result.value)
+      seedFromCurrent(result.value.current)
+    }).catch((cause: unknown) => {
+      setLoading(false)
+      setError(cause instanceof Error ? cause.message : String(cause))
+    })
+  }
+
+  useEffect(() => {
     let cancelled = false
+    if (sessionId === undefined) {
+      setCatalog(null)
+      setError(null)
+      return
+    }
     setLoading(true)
     setError(null)
     void api.sessions.models({ sessionId }).then(({ result }) => {
@@ -50,25 +108,26 @@ export function ModelPicker({
         return
       }
       setCatalog(result.value)
-      if (value === undefined) {
-        const current = result.value.current
-        if (current.provider && current.model) {
-          onChange({
-            provider: current.provider,
-            model: current.model,
-            ...current.reasoningEffort === undefined ? {} : { reasoningEffort: current.reasoningEffort },
-          })
-        }
-      }
+      seedFromCurrent(result.value.current)
     }).catch((cause: unknown) => {
       if (cancelled) return
       setLoading(false)
       setError(cause instanceof Error ? cause.message : String(cause))
     })
     return () => { cancelled = true }
-  // Intentionally omit value/onChange: mount/session drives catalog load.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, api])
+
+  useEffect(() => {
+    if (!open) return
+    const closeOutside = (event: MouseEvent): void => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setPane('root')
+      }
+    }
+    document.addEventListener('mousedown', closeOutside)
+    return () => { document.removeEventListener('mousedown', closeOutside) }
+  }, [open])
 
   const choices = useMemo(() => {
     if (catalog === null) return []
@@ -77,76 +136,249 @@ export function ModelPicker({
       providerName: group.name,
       model: model.id,
       modelName: model.name,
+      description: model.description,
       reasoning: model.reasoning,
     })))
   }, [catalog])
 
+  const groups = catalog?.groups ?? []
   const selected = choices.find(c => c.provider === value?.provider && c.model === value?.model)
-  const efforts = selected?.reasoning?.efforts ?? []
+  const reasoning = selected?.reasoning
+  const effectiveEffort = value?.reasoningEffort ?? reasoning?.defaultEffort
+  const effortLabel = reasoning === undefined
+    ? undefined
+    : effectiveEffort === undefined
+      ? t('effortDefault')
+      : reasoning.efforts.find(level => level.id === effectiveEffort)?.name ?? effectiveEffort
+
+  const effortChoices = useMemo<readonly EffortChoice[]>(() => {
+    if (reasoning === undefined) return []
+    return [
+      ...reasoning.defaultEffort === undefined
+        ? [{ key: 'provider-default', effort: undefined, label: t('effortDefault') }]
+        : [],
+      ...reasoning.efforts.map(effort => ({
+        key: `effort:${effort.id}`,
+        effort: effort.id,
+        label: effort.name,
+        ...effort.description === undefined ? {} : { description: effort.description },
+      })),
+    ]
+  }, [reasoning, t])
+
+  const close = (restoreFocus = false): void => {
+    setOpen(false)
+    setPane('root')
+    if (restoreFocus) queueMicrotask(() => { triggerRef.current?.focus() })
+  }
+
+  const show = (): void => {
+    setPane('root')
+    setOpen(true)
+    load()
+  }
+
+  const moveFocus = (offset: number): void => {
+    const items = itemRefs.current.filter(item => item !== null)
+    if (items.length === 0) return
+    const active = items.findIndex(item => item === document.activeElement)
+    const next = (Math.max(active, 0) + offset + items.length) % items.length
+    items[next]?.focus()
+  }
+
+  const onRootKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (event.key === 'Escape' && open) {
+      event.preventDefault()
+      if (pane !== 'root') setPane('root')
+      else close(true)
+      return
+    }
+    if (!open) return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      moveFocus(event.key === 'ArrowDown' ? 1 : -1)
+    }
+  }
+
+  const onBlur = (event: FocusEvent<HTMLDivElement>): void => {
+    if (event.relatedTarget instanceof Node && rootRef.current?.contains(event.relatedTarget)) return
+    close()
+  }
+
+  const chooseModel = (provider: string, model: string): void => {
+    const row = choices.find(c => c.provider === provider && c.model === model)
+    const defaultEffort = row?.reasoning?.defaultEffort
+    onChange({
+      provider,
+      model,
+      ...defaultEffort === undefined ? {} : { reasoningEffort: defaultEffort },
+    })
+    close(true)
+  }
+
+  const chooseEffort = (effort: string | undefined): void => {
+    if (value === undefined) return
+    onChange({
+      provider: value.provider,
+      model: value.model,
+      ...effort === undefined ? {} : { reasoningEffort: effort },
+    })
+    close(true)
+  }
 
   if (sessionId === undefined) {
     return <p className={css.muted}>{t('noSession')}</p>
   }
 
+  const modelLabel = selected?.modelName ?? t('triggerFallback')
+  const triggerAria = selected === undefined
+    ? t('triggerSelectAria')
+    : effortLabel === undefined
+      ? modelLabel
+      : `${modelLabel} · ${effortLabel}`
+
+  itemRefs.current = []
+  let itemIndex = 0
+  const itemRef = () => {
+    const at = itemIndex++
+    return (node: HTMLButtonElement | null) => { itemRefs.current[at] = node }
+  }
+
+  const menuClass = placement === 'top'
+    ? `${css.menu} ${css.menuTop}`
+    : `${css.menu} ${css.menuBottom}`
+
   return (
-    <div className={[css.picker, className].filter(Boolean).join(' ')}>
-      {error !== null ? <p className={css.error}>{t('loadError')}: {error}</p> : null}
-      <label className={css.row}>
-        <span className={css.label}>{t('modelLabel')}</span>
-        <select
-          className={css.select}
-          disabled={disabled || loading || choices.length === 0}
-          value={selected ? `${selected.provider}\0${selected.model}` : ''}
-          onChange={(event) => {
-            const [provider, model] = event.target.value.split('\0')
-            if (!provider || !model) return
-            const row = choices.find(c => c.provider === provider && c.model === model)
-            const defaultEffort = row?.reasoning?.defaultEffort
-            onChange({
-              provider,
-              model,
-              ...defaultEffort === undefined ? {} : { reasoningEffort: defaultEffort },
-            })
-          }}
+    <div
+      ref={rootRef}
+      className={[css.root, className].filter(Boolean).join(' ')}
+      onKeyDown={onRootKeyDown}
+      onBlur={onBlur}
+    >
+      <button
+        ref={triggerRef}
+        type="button"
+        className={css.trigger}
+        aria-label={triggerAria}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? `${id}-menu` : undefined}
+        title={triggerAria}
+        disabled={disabled}
+        onClick={() => {
+          if (open) close()
+          else show()
+        }}
+      >
+        <span className={css.triggerLabel}>{modelLabel}</span>
+        {effortLabel !== undefined && <span className={css.triggerEffort}>{effortLabel}</span>}
+        <IconChevronDownOutline14 className={[css.chevron, open ? css.chevronOpen : ''].filter(Boolean).join(' ')} />
+      </button>
+
+      {open && (
+        <div
+          id={`${id}-menu`}
+          className={menuClass}
+          role="menu"
+          aria-label={t('menuAria')}
+          aria-busy={loading}
         >
-          {choices.length === 0
-            ? <option value="">{loading ? '…' : '—'}</option>
-            : choices.map(c => (
-              <option key={`${c.provider}/${c.model}`} value={`${c.provider}\0${c.model}`}>
-                {c.providerName} / {c.modelName}
-              </option>
-            ))}
-        </select>
-      </label>
-      {efforts.length > 0 ? (
-        <label className={css.row}>
-          <span className={css.label}>{t('effortLabel')}</span>
-          <select
-            className={css.select}
-            disabled={disabled || loading}
-            value={value?.reasoningEffort ?? ''}
-            onChange={(event) => {
-              if (value === undefined) return
-              const effort = event.target.value
-              onChange({
-                provider: value.provider,
-                model: value.model,
-                ...effort.length === 0 ? {} : { reasoningEffort: effort },
-              })
-            }}
-          >
-            {selected?.reasoning?.defaultEffort === undefined
-              ? <option value="">{t('effortDefault')}</option>
-              : null}
-            {efforts.map(effort => (
-              <option key={effort.id} value={effort.id}>{effort.name}</option>
-            ))}
-          </select>
-        </label>
-      ) : null}
-      {catalog !== null && value !== undefined && !sameSelection(value, catalog.current)
-        ? null
-        : null}
+          {pane === 'root' && (
+            <>
+              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('model') }}>
+                <span className={css.cellLabel}>{t('modelLabel')}</span>
+                <span className={css.cellValue}>{modelLabel}</span>
+                <IconChevronRightOutline14 className={css.cellChevron} />
+              </button>
+              {reasoning !== undefined && (
+                <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('effort') }}>
+                  <span className={css.cellLabel}>{t('effortLabel')}</span>
+                  <span className={css.cellValue}>{effortLabel}</span>
+                  <IconChevronRightOutline14 className={css.cellChevron} />
+                </button>
+              )}
+            </>
+          )}
+
+          {pane === 'model' && (
+            <>
+              {loading && <div className={css.status}>{t('statusLoading')}</div>}
+              {error !== null && (
+                <div className={css.error}>
+                  <span>{t('loadError')}: {error}</span>
+                  <button type="button" className={css.retry} onClick={load}>{t('retry')}</button>
+                </div>
+              )}
+              <div className={`${css.groups} scrollable`}>
+                {groups.map((group) => {
+                  const headingId = `${id}-${group.id}`
+                  return (
+                    <section role="group" aria-labelledby={headingId} className={css.group} key={group.id}>
+                      <div className={css.groupTitle} id={headingId}>{group.name}</div>
+                      {group.models.map((model) => {
+                        const isSelected = value?.provider === group.id && value.model === model.id
+                        return (
+                          <button
+                            ref={itemRef()}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={isSelected}
+                            className={css.option}
+                            key={model.id}
+                            title={model.name}
+                            disabled={disabled}
+                            onClick={() => { chooseModel(group.id, model.id) }}
+                          >
+                            <span className={css.optionCopy}>
+                              <span className={css.modelName}>{model.name}</span>
+                              {model.description !== undefined && (
+                                <span className={css.description}>{model.description}</span>
+                              )}
+                            </span>
+                            <span className={css.check}>
+                              {isSelected ? <IconCheckOutline16 /> : null}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </section>
+                  )
+                })}
+              </div>
+              {!loading && error === null && choices.length === 0 && (
+                <div className={css.empty}>{t('emptyModels')}</div>
+              )}
+            </>
+          )}
+
+          {pane === 'effort' && (
+            effortChoices.length === 0
+              ? <div className={css.empty}>{t('emptyEfforts')}</div>
+              : effortChoices.map(level => (
+                <button
+                  ref={itemRef()}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={effectiveEffort === level.effort}
+                  className={css.option}
+                  key={level.key}
+                  disabled={disabled}
+                  onClick={() => { chooseEffort(level.effort) }}
+                >
+                  <span className={css.optionCopy}>
+                    <span className={css.modelName}>{level.label}</span>
+                    {level.description !== undefined && (
+                      <span className={css.description}>{level.description}</span>
+                    )}
+                  </span>
+                  <span className={css.check}>
+                    {effectiveEffort === level.effort ? <IconCheckOutline16 /> : null}
+                  </span>
+                </button>
+              ))
+          )}
+        </div>
+      )}
     </div>
   )
 }

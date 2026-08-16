@@ -20,6 +20,12 @@ import {
 import { installConfigHttp } from './config-http.ts'
 import type { Config as ModelSwitchConfig } from './shared.ts'
 import { mergeAgentOptions } from './merge.ts'
+import {
+  effortFromSelection,
+  installSessionLabelTracking,
+  installSessionLabelsHttp,
+  SessionLabelRegistry,
+} from './session-labels.ts'
 
 export {
   resolveCustomSelection,
@@ -28,6 +34,8 @@ export {
 export type { Config as ModelSwitchConfig } from './shared.ts'
 export { ConfigSchema, MODEL_SWITCH_SETTINGS_NAMESPACE }
 export { CONFIG_ROUTE } from './config-http.ts'
+export { SESSION_LABELS_ROUTE } from './label.ts'
+export { formatModelLabel, formatContextWindow } from './label.ts'
 
 /** Schemastery Config export expected by DSH plugin loaders. */
 export const Config = ConfigSchema
@@ -81,6 +89,12 @@ export function apply(ctx: Context, config: ModelSwitchConfig = {}): void {
     await settings.replace(MODEL_SWITCH_SETTINGS_NAMESPACE, next)
     return current()
   })
+
+  const labels = new SessionLabelRegistry()
+  installSessionLabelsHttp(ctx, labels)
+  installSessionLabelTracking(ctx, labels, () => (
+    effortFromSelection(resolveCustomSelection(current().subagent))
+  ))
 
   const runtime = ctx.subagents as SubagentRuntime
   const originalStart = runtime.start.bind(runtime)

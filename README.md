@@ -1,65 +1,62 @@
-# dsh-model-switch
+﻿# dsh-model-switch
 
 English | [中文](README.zh.md)
 
-DeepSeek Harness plugin: choose models for **subagents** and **plan execution** separately from the main session model.
+Use the right model for each stage of work in DeepSeek Harness.
 
-## Features
+The main conversation, subagents, and plan execution serve different purposes. `dsh-model-switch` lets each of them use a suitable model without changing the normal DSH workflow.
 
-1. **Settings → Model switch**
-   - Subagent model: follow main / custom (picker like the composer model seat)
-   - Plan execution model: follow main / custom
-2. **Plan review panel**
-   - Model picker immediately before **Approve**
-   - Panel choice overrides settings; settings override “follow main”
+## Why use it
+
+- **Match models to tasks** — keep your preferred model in the main conversation and use another model for subagents or plan execution.
+- **Avoid repeated switching** — save defaults once instead of changing models before every task.
+- **Confirm before execution** — review or change the model directly in the plan approval panel.
+- **See what subagents use** — display the model, context window, and reasoning effort, such as `GPT-5.6 Sol 1M Max`.
+- **Keep the main model unchanged** — after plan execution, DSH restores the previous main-session model.
+
+## Preview
+
+### Configure model defaults
+
+![Model switch settings](docs/settings.png)
+
+### Choose the model for plan execution
+
+![Plan awaiting review](docs/plan.png)
+
+![Plan execution model](docs/plan-exec.png)
+
+### See the model used by subagents
+
+![Subagent model overview](docs/subagent.png)
+
+![Subagent model details](docs/subagent-detail.png)
 
 ## Install
 
 ```bash
-dsh plugin --profile <your-profile> add github:lincong1987/dsh-model-switch
-# restart the profile / host
+dsh plugin --profile web add github:lincong1987/dsh-model-switch
 ```
 
-Local development:
+Restart DSH after installation.
 
-```bash
-pnpm install --ignore-workspace
-pnpm build
-dsh plugin --profile <your-profile> add link:/absolute/path/to/dsh-model-switch
-```
+## Use
 
-Settings are persisted through the host route `/_dsh/model-switch/config` (third-party namespaces are not on the Web `settings.*` allowlist).
+1. Open **Settings → Model switch**.
+2. Configure the **Subagent model** and **Plan execution model**:
+   - **Follow main model** uses the current conversation model.
+   - **Custom** lets you choose a model and reasoning effort.
+3. When reviewing a plan, confirm or change the execution model before selecting **Approve**.
 
-If the settings tab does not appear after a `github:` install, ensure the bundle patch row is present in the profile `cordis.patch.yml`:
+The model selected in the plan review panel takes priority over the saved plan-execution setting.
 
-```yaml
-- insert:
-    - id: model-switch
-      name: dsh-model-switch
-```
+## Compatibility
 
-## Behaviour notes
+Subagent model switching applies to in-process subagents such as `spawn` and `fork`. External-process agents may manage their models independently.
 
-- Subagent override targets **in-process** backends (`spawn` / `fork`). Out-of-process ACP / Codex / Claude Code children typically ignore `agentOptions`.
-- Explicit `tool-subagent` `agentOptions` in the composition still win over this plugin’s settings.
-- Approving a plan with a custom execution model calls `session.selectModel` before answering `exit_plan_mode` (same effect as switching the session model, then approving).
+## Community
 
-## Publish
-
-Repository: https://github.com/lincong1987/dsh-model-switch
-
-```bash
-cd /path/to/dsh-model-switch
-git init   # if needed
-git add .
-git commit -m "feat: initial dsh-model-switch plugin"
-git remote add origin https://github.com/lincong1987/dsh-model-switch.git
-git pull origin main --allow-unrelated-histories   # keep existing LICENSE
-git push -u origin main
-git tag v0.1.0 && git push origin v0.1.0
-```
-
-Optional npm: `npm publish` after `pnpm build`.
+![WeChat](docs/wechat.jpg)
 
 ## License
 

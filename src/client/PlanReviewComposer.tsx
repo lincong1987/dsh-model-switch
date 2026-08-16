@@ -5,6 +5,7 @@
 import { useMemo } from 'react'
 import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { ConfigStore } from './config-store.ts'
 import type { LocaleKey } from './locales.ts'
@@ -15,6 +16,7 @@ export interface PlanReviewComposerInjected {
   store: ConfigStore
   api: ConnectionHandle['api']
   t: (key: LocaleKey) => string
+  isSessionRunning: (sessionId: SessionId) => boolean
 }
 
 export type PlanReviewComposerProps =
@@ -32,11 +34,26 @@ export function selectPlanReview({ interactions }: ComposerChainProps): Question
 }
 
 export function PlanReviewComposer(props: PlanReviewComposerProps) {
-  const { matched, store, api, t } = props
+  const { matched, store, api, t, isSessionRunning } = props
   const pending = useMemo(() => new PendingQuestion(matched), [matched])
   const review = useMemo(() => planReviewOf(pending.questions), [pending])
-  if (store === undefined || api === undefined || t === undefined || review === undefined) {
+  if (
+    store === undefined
+    || api === undefined
+    || t === undefined
+    || isSessionRunning === undefined
+    || review === undefined
+  ) {
     return null
   }
-  return <PlanReviewPanel pending={pending} review={review} store={store} api={api} t={t} />
+  return (
+    <PlanReviewPanel
+      pending={pending}
+      review={review}
+      store={store}
+      api={api}
+      t={t}
+      isSessionRunning={isSessionRunning}
+    />
+  )
 }

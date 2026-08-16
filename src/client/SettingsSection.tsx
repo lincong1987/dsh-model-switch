@@ -8,6 +8,7 @@ import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
 import type { Config, ModelSelectionConfig, RouteSwitchConfig } from '../shared.ts'
 import { ConfigStore } from './config-store.ts'
+import { IconModelSwitch } from './IconModelSwitch.tsx'
 import { ModelPicker } from './ModelPicker.tsx'
 import type { LocaleKey } from './locales.ts'
 import css from './styles.module.css'
@@ -22,7 +23,6 @@ export interface SettingsInjected {
 export type SettingsSectionProps = PropsRuntime<'settings.section'> & Partial<SettingsInjected>
 
 function RouteBlock(props: {
-  field: 'subagent' | 'planExecute'
   title: string
   hint: string
   route: RouteSwitchConfig
@@ -32,44 +32,48 @@ function RouteBlock(props: {
   t: (key: LocaleKey) => string
   busy: boolean
 }) {
-  const { field, title, hint, route, onChange, sessionId, api, t, busy } = props
+  const { title, hint, route, onChange, sessionId, api, t, busy } = props
+  const follow = route.mode !== 'custom'
   return (
     <section className={css.block}>
       <h3 className={css.blockTitle}>{title}</h3>
       <p className={css.hint}>{hint}</p>
       <div className={css.modes} role="radiogroup" aria-label={title}>
-        <label className={css.mode}>
-          <input
-            type="radio"
-            name={`model-switch-${field}`}
-            checked={route.mode !== 'custom'}
-            disabled={busy}
-            onChange={() => { onChange({ mode: 'follow-main', selection: route.selection }) }}
-          />
+        <button
+          type="button"
+          role="radio"
+          aria-checked={follow}
+          className={[css.mode, follow ? css.modeActive : ''].filter(Boolean).join(' ')}
+          disabled={busy}
+          onClick={() => { onChange({ mode: 'follow-main', selection: route.selection }) }}
+        >
           {t('modeFollow')}
-        </label>
-        <label className={css.mode}>
-          <input
-            type="radio"
-            name={`model-switch-${field}`}
-            checked={route.mode === 'custom'}
-            disabled={busy}
-            onChange={() => { onChange({ mode: 'custom', selection: route.selection }) }}
-          />
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!follow}
+          className={[css.mode, !follow ? css.modeActive : ''].filter(Boolean).join(' ')}
+          disabled={busy}
+          onClick={() => { onChange({ mode: 'custom', selection: route.selection }) }}
+        >
           {t('modeCustom')}
-        </label>
+        </button>
       </div>
       {route.mode === 'custom' ? (
-        <ModelPicker
-          sessionId={sessionId}
-          api={api}
-          value={route.selection}
-          disabled={busy}
-          t={t}
-          onChange={(selection: ModelSelectionConfig) => {
-            onChange({ mode: 'custom', selection })
-          }}
-        />
+        <div className={css.pickerWrap}>
+          <ModelPicker
+            sessionId={sessionId}
+            api={api}
+            value={route.selection}
+            disabled={busy}
+            t={t}
+            placement="bottom"
+            onChange={(selection: ModelSelectionConfig) => {
+              onChange({ mode: 'custom', selection })
+            }}
+          />
+        </div>
       ) : null}
     </section>
   )
@@ -124,13 +128,15 @@ export function SettingsSection(props: SettingsSectionProps) {
 
   return (
     <div className={css.section}>
-      <h2 style={{ margin: 0, fontSize: '1.1rem' }}>{t('title')}</h2>
+      <div className={css.titleRow}>
+        <IconModelSwitch className={css.titleIcon} size={18} />
+        <h2 className={css.title}>{t('title')}</h2>
+      </div>
       <p className={css.intro}>{t('intro')}</p>
       {error !== null || snap.error !== null
         ? <p className={css.error}>{t('saveError')}: {error ?? snap.error}</p>
         : null}
       <RouteBlock
-        field="subagent"
         title={t('subagentTitle')}
         hint={t('subagentHint')}
         route={subagent}
@@ -141,7 +147,6 @@ export function SettingsSection(props: SettingsSectionProps) {
         onChange={(next) => { writeRoute('subagent', next) }}
       />
       <RouteBlock
-        field="planExecute"
         title={t('planTitle')}
         hint={t('planHint')}
         route={planExecute}
