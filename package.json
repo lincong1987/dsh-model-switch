@@ -1,7 +1,7 @@
 {
   "name": "dsh-model-switch",
-  "version": "0.2.1",
-  "description": "DSH plugin: choose models for subagents and plan execution separately",
+  "version": "0.2.2",
+  "description": "DSH plugin: choose models for subagents and plan execution separately / 为子代理和计划执行选择更合适的模型",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
