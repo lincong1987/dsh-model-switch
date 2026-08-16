@@ -1,0 +1,46 @@
+/** Locale copy for dsh-model-switch. */
+export declare const zh: {
+    nav: string;
+    title: string;
+    intro: string;
+    subagentTitle: string;
+    subagentHint: string;
+    planTitle: string;
+    planHint: string;
+    modeFollow: string;
+    modeCustom: string;
+    modelLabel: string;
+    effortLabel: string;
+    effortDefault: string;
+    noSession: string;
+    loadError: string;
+    saveError: string;
+    planHeader: string;
+    planDiscuss: string;
+    planDecline: string;
+    planApprove: string;
+    planModelLabel: string;
+};
+export declare const en: {
+    nav: string;
+    title: string;
+    intro: string;
+    subagentTitle: string;
+    subagentHint: string;
+    planTitle: string;
+    planHint: string;
+    modeFollow: string;
+    modeCustom: string;
+    modelLabel: string;
+    effortLabel: string;
+    effortDefault: string;
+    noSession: string;
+    loadError: string;
+    saveError: string;
+    planHeader: string;
+    planDiscuss: string;
+    planDecline: string;
+    planApprove: string;
+    planModelLabel: string;
+};
+export type LocaleKey = keyof typeof zh;
