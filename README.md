@@ -18,19 +18,25 @@ The main conversation, subagents, and plan execution serve different purposes. `
 
 ### Configure model defaults
 
-![Model switch settings](docs/settings.png)
+<img src="docs/settings.png" alt="Model switch settings" width="720" />
 
 ### Choose the model for plan execution
 
-![Plan awaiting review](docs/plan.png)
-
-![Plan execution model](docs/plan-exec.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/plan.png" alt="Plan awaiting review" /></td>
+    <td width="50%"><img src="docs/plan-exec.png" alt="Plan execution model" /></td>
+  </tr>
+</table>
 
 ### See the model used by subagents
 
-![Subagent model overview](docs/subagent.png)
-
-![Subagent model details](docs/subagent-detail.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/subagent.png" alt="Subagent model overview" /></td>
+    <td width="50%"><img src="docs/subagent-detail.png" alt="Subagent model details" /></td>
+  </tr>
+</table>
 
 ## Install
 
@@ -56,7 +62,11 @@ Subagent model switching applies to in-process subagents such as `spawn` and `fo
 
 ## Community
 
-![WeChat](docs/wechat.jpg)
+<img src="docs/wechat.jpg" alt="WeChat" width="160" />
+
+## Links
+
+- [Linux.do](https://linux.do)
 
 ## License
 

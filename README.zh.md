@@ -18,19 +18,25 @@
 
 ### 设置默认模型
 
-![模型切换设置](docs/settings.png)
+<img src="docs/settings.png" alt="模型切换设置" width="720" />
 
 ### 选择计划执行模型
 
-![计划待审](docs/plan.png)
-
-![计划执行模型](docs/plan-exec.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/plan.png" alt="计划待审" /></td>
+    <td width="50%"><img src="docs/plan-exec.png" alt="计划执行模型" /></td>
+  </tr>
+</table>
 
 ### 查看子代理使用的模型
 
-![子代理模型概览](docs/subagent.png)
-
-![子代理模型详情](docs/subagent-detail.png)
+<table>
+  <tr>
+    <td width="50%"><img src="docs/subagent.png" alt="子代理模型概览" /></td>
+    <td width="50%"><img src="docs/subagent-detail.png" alt="子代理模型详情" /></td>
+  </tr>
+</table>
 
 ## 安装
 
@@ -56,7 +62,11 @@ dsh plugin --profile web add github:lincong1987/dsh-model-switch
 
 ## 交流
 
-![微信](docs/wechat.jpg)
+<img src="docs/wechat.jpg" alt="微信" width="160" />
+
+## 友情链接
+
+- [Linux.do 社区](https://linux.do)
 
 ## 许可证
 
