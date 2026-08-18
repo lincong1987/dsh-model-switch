@@ -1,23 +1,27 @@
 /**
- * Browser client for the host config HTTP surface.
+ * Browser mirror of the host `model-switch` settings namespace.
+ *
+ * DSH 0.1.0-rc.7 serves plugin-registered namespaces through settings.*;
+ * this store is a stable snapshot wrapper over `ctx.settingsScope`.
  */
-import type { Config } from '../shared.ts';
-/** Must match host `CONFIG_ROUTE`. */
-export declare const CONFIG_ROUTE = "/_dsh/model-switch/config";
+import type { SettingsScope } from '@deepseek-ai/dsh-client-runtime/client';
+import type { Config, RouteSwitchConfig } from '../shared.ts';
 export interface ConfigStoreSnapshot {
     status: 'loading' | 'ready' | 'error';
     value: Config;
     error: string | null;
 }
-type Listener = () => void;
-/** Simple reactive config store over same-origin HTTP. */
+/** Reactive config store over the client settings-namespace scope. */
 export declare class ConfigStore {
-    private snapshot;
-    private listeners;
+    private readonly scope;
+    private lastRaw;
+    private lastView;
+    constructor(scope: SettingsScope<Config>);
     getSnapshot(): ConfigStoreSnapshot;
-    subscribe(listener: Listener): () => void;
-    private publish;
-    load(): Promise<void>;
-    save(next: Config): Promise<void>;
+    subscribe(listener: () => void): () => void;
+    /**
+     * Persist one route field. `settingsScope.set` is one field per call and
+     * fences the write with the latest known namespace revision.
+     */
+    saveRoute(field: 'subagent' | 'planExecute', next: RouteSwitchConfig): Promise<void>;
 }
-export {};

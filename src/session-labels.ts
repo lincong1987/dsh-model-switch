@@ -20,8 +20,6 @@ interface WebRouteHost {
   }): () => void
 }
 
-const WEB_KEYS = ['webServer', 'httpServer'] as const
-
 function json(res: ServerResponse, status: number, body: unknown): void {
   const bytes = Buffer.from(JSON.stringify(body))
   res.writeHead(status, {
@@ -167,7 +165,7 @@ export function installSessionLabelsHttp(ctx: Context, registry: SessionLabelReg
   }
 
   const tryMount = (): void => {
-    const web = (ctx.get(WEB_KEYS[0]) ?? ctx.get(WEB_KEYS[1])) as WebRouteHost | undefined
+    const web = ctx.get('webServer') as WebRouteHost | undefined
     if (web !== undefined) mount(web)
   }
 

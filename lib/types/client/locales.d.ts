@@ -22,6 +22,7 @@ export declare const zh: {
     noSession: string;
     loadError: string;
     saveError: string;
+    unavailable: string;
     planHeader: string;
     planDiscuss: string;
     planDecline: string;
@@ -51,6 +52,7 @@ export declare const en: {
     noSession: string;
     loadError: string;
     saveError: string;
+    unavailable: string;
     planHeader: string;
     planDiscuss: string;
     planDecline: string;

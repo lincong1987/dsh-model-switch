@@ -98,10 +98,6 @@ export function PlanReviewPanel({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    void store.load()
-  }, [store])
-
-  useEffect(() => {
     if (!settingsReady || pickerReady) return
     setPanelSelection(settingsSelection)
     setPickerReady(true)

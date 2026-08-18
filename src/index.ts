@@ -17,7 +17,6 @@ import {
   MODEL_SWITCH_SETTINGS_NAMESPACE,
   resolveCustomSelection,
 } from './config.ts'
-import { installConfigHttp } from './config-http.ts'
 import type { Config as ModelSwitchConfig } from './shared.ts'
 import { mergeAgentOptions } from './merge.ts'
 import {
@@ -33,7 +32,6 @@ export {
 } from './shared.ts'
 export type { Config as ModelSwitchConfig } from './shared.ts'
 export { ConfigSchema, MODEL_SWITCH_SETTINGS_NAMESPACE }
-export { CONFIG_ROUTE } from './config-http.ts'
 export { SESSION_LABELS_ROUTE } from './label.ts'
 export { formatModelLabel, formatContextWindow } from './label.ts'
 
@@ -79,15 +77,6 @@ export function apply(ctx: Context, config: ModelSwitchConfig = {}): void {
   installSettingsSection(ctx, MODEL_SWITCH_SETTINGS_NAMESPACE, ConfigSchema, config, {
     setSource: (source) => { current = source },
     onChange: () => { /* live reads via current() */ },
-  })
-
-  // Web clients cannot mutate third-party namespaces through settings.*; expose
-  // a same-origin HTTP surface that writes the host-registered section.
-  installConfigHttp(ctx, () => current(), async (next) => {
-    const settings = ctx.get('settings')
-    if (settings === undefined) throw new Error('settings service unavailable')
-    await settings.replace(MODEL_SWITCH_SETTINGS_NAMESPACE, next)
-    return current()
   })
 
   const labels = new SessionLabelRegistry()

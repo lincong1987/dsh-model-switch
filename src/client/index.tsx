@@ -9,6 +9,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import { MODEL_SWITCH_NS, type Config } from '../shared.ts'
 import { en, zh, type LocaleKey } from './locales.ts'
 import { ConfigStore } from './config-store.ts'
 import { SettingsSection, type SettingsInjected } from './SettingsSection.tsx'
@@ -39,6 +40,8 @@ export const inject = [
   'locale',
   'connection',
   'sessions',
+  'remote',
+  'settingsScope',
 ]
 
 export function apply(ctx: ClientContext): void {
@@ -46,7 +49,7 @@ export function apply(ctx: ClientContext): void {
 
   const t = ctx.locale.bind(NS) as (key: LocaleKey) => string
   const connection = ctx.get('connection') as ConnectionHandle
-  const store = new ConfigStore()
+  const store = new ConfigStore(ctx.settingsScope.bind<Config>({ namespace: MODEL_SWITCH_NS }))
   const labels = new SessionLabelStore()
 
   const settingsInject = (): SettingsInjected => ({

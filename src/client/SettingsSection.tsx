@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import type { Config, ModelSelectionConfig, RouteSwitchConfig } from '../shared.ts'
+import type { ModelSelectionConfig, RouteSwitchConfig } from '../shared.ts'
 import { ConfigStore } from './config-store.ts'
 import { IconModelSwitch } from './IconModelSwitch.tsx'
 import { ModelPicker } from './ModelPicker.tsx'
@@ -95,10 +95,6 @@ export function SettingsSection(props: SettingsSectionProps) {
   const [sessionId, setSessionId] = useState<SessionId | undefined>(currentSessionId())
 
   useEffect(() => {
-    void store.load()
-  }, [store])
-
-  useEffect(() => {
     const tick = (): void => { setSessionId(currentSessionId()) }
     tick()
     const id = window.setInterval(tick, 1000)
@@ -117,8 +113,7 @@ export function SettingsSection(props: SettingsSectionProps) {
   const writeRoute = (field: 'subagent' | 'planExecute', next: RouteSwitchConfig): void => {
     setBusy(true)
     setError(null)
-    const payload: Config = { ...value, [field]: next }
-    void store.save(payload).then(() => {
+    void store.saveRoute(field, next).then(() => {
       setBusy(false)
     }).catch((cause: unknown) => {
       setBusy(false)
@@ -134,7 +129,11 @@ export function SettingsSection(props: SettingsSectionProps) {
       </div>
       <p className={css.intro}>{t('intro')}</p>
       {error !== null || snap.error !== null
-        ? <p className={css.error}>{t('saveError')}: {error ?? snap.error}</p>
+        ? (
+          <p className={css.error}>
+            {t('saveError')}: {snap.error === 'unavailable' ? t('unavailable') : (error ?? snap.error)}
+          </p>
+        )
         : null}
       <RouteBlock
         title={t('subagentTitle')}

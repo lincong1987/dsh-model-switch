@@ -7,7 +7,6 @@ import type { Config as ModelSwitchConfig } from './shared.ts';
 export { resolveCustomSelection, resolvePlanExecuteSelection, } from './shared.ts';
 export type { Config as ModelSwitchConfig } from './shared.ts';
 export { ConfigSchema, MODEL_SWITCH_SETTINGS_NAMESPACE };
-export { CONFIG_ROUTE } from './config-http.ts';
 export { SESSION_LABELS_ROUTE } from './label.ts';
 export { formatModelLabel, formatContextWindow } from './label.ts';
 /** Schemastery Config export expected by DSH plugin loaders. */

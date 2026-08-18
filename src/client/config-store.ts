@@ -1,11 +1,12 @@
 /**
- * Browser client for the host config HTTP surface.
+ * Browser mirror of the host `model-switch` settings namespace.
+ *
+ * DSH 0.1.0-rc.7 serves plugin-registered namespaces through settings.*;
+ * this store is a stable snapshot wrapper over `ctx.settingsScope`.
  */
 
-import type { Config } from '../shared.ts'
-
-/** Must match host `CONFIG_ROUTE`. */
-export const CONFIG_ROUTE = '/_dsh/model-switch/config'
+import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Config, RouteSwitchConfig } from '../shared.ts'
 
 export interface ConfigStoreSnapshot {
   status: 'loading' | 'ready' | 'error'
@@ -13,70 +14,46 @@ export interface ConfigStoreSnapshot {
   error: string | null
 }
 
-type Listener = () => void
+const EMPTY: Config = {}
 
-/** Simple reactive config store over same-origin HTTP. */
-export class ConfigStore {
-  private snapshot: ConfigStoreSnapshot = {
-    status: 'loading',
-    value: {},
-    error: null,
+function view(snap: SettingsScopeSnapshot<Config>): ConfigStoreSnapshot {
+  if (snap.status === 'unavailable') {
+    return { status: 'error', value: snap.value ?? EMPTY, error: 'unavailable' }
   }
-  private listeners = new Set<Listener>()
+  if (snap.status === 'loading' && snap.value === undefined) {
+    return { status: 'loading', value: EMPTY, error: null }
+  }
+  return { status: 'ready', value: snap.value ?? EMPTY, error: null }
+}
+
+/** Reactive config store over the client settings-namespace scope. */
+export class ConfigStore {
+  private lastRaw: SettingsScopeSnapshot<Config> | undefined
+  private lastView: ConfigStoreSnapshot = { status: 'loading', value: EMPTY, error: null }
+
+  constructor(private readonly scope: SettingsScope<Config>) {}
 
   getSnapshot(): ConfigStoreSnapshot {
-    return this.snapshot
+    const raw = this.scope.getSnapshot()
+    if (raw === this.lastRaw) return this.lastView
+    this.lastRaw = raw
+    this.lastView = view(raw)
+    return this.lastView
   }
 
-  subscribe(listener: Listener): () => void {
-    this.listeners.add(listener)
-    return () => { this.listeners.delete(listener) }
+  subscribe(listener: () => void): () => void {
+    return this.scope.subscribe(listener)
   }
 
-  private publish(next: ConfigStoreSnapshot): void {
-    this.snapshot = next
-    for (const listener of this.listeners) listener()
-  }
-
-  async load(): Promise<void> {
-    this.publish({ ...this.snapshot, status: 'loading', error: null })
-    try {
-      const response = await fetch(CONFIG_ROUTE, { credentials: 'same-origin' })
-      const body = await response.json() as { ok: boolean; value?: Config; error?: { message: string } }
-      if (!response.ok || !body.ok || body.value === undefined) {
-        throw new Error(body.error?.message ?? `HTTP ${response.status}`)
-      }
-      this.publish({ status: 'ready', value: body.value, error: null })
-    } catch (error: unknown) {
-      this.publish({
-        status: 'error',
-        value: this.snapshot.value,
-        error: error instanceof Error ? error.message : String(error),
-      })
-    }
-  }
-
-  async save(next: Config): Promise<void> {
-    this.publish({ ...this.snapshot, status: 'loading', error: null })
-    try {
-      const response = await fetch(CONFIG_ROUTE, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ value: next }),
-      })
-      const body = await response.json() as { ok: boolean; value?: Config; error?: { message: string } }
-      if (!response.ok || !body.ok || body.value === undefined) {
-        throw new Error(body.error?.message ?? `HTTP ${response.status}`)
-      }
-      this.publish({ status: 'ready', value: body.value, error: null })
-    } catch (error: unknown) {
-      this.publish({
-        status: 'error',
-        value: this.snapshot.value,
-        error: error instanceof Error ? error.message : String(error),
-      })
-      throw error
+  /**
+   * Persist one route field. `settingsScope.set` is one field per call and
+   * fences the write with the latest known namespace revision.
+   */
+  async saveRoute(field: 'subagent' | 'planExecute', next: RouteSwitchConfig): Promise<void> {
+    await this.scope.set(field, next)
+    const snap = this.getSnapshot()
+    if (snap.status === 'error') {
+      throw new Error(snap.error ?? 'unavailable')
     }
   }
 }
