@@ -58,7 +58,7 @@ The model selected in the plan review panel takes priority over the saved plan-e
 
 ## Compatibility
 
-Requires DeepSeek Harness **0.1.0-rc.7** or later. Settings are stored in the host settings document through the plugin's registered `model-switch` namespace.
+Requires DeepSeek Harness **0.1.0-rc.8** or later. Settings are stored in the host settings document through the plugin's registered `model-switch` namespace.
 
 Subagent model switching applies to in-process subagents such as `spawn` and `fork`. External-process agents may manage their models independently.
 

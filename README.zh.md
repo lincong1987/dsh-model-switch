@@ -58,7 +58,7 @@ dsh plugin --profile web add github:lincong1987/dsh-model-switch
 
 ## 兼容性
 
-需要 DeepSeek Harness **0.1.0-rc.7** 或更高版本。设置通过插件注册的 `model-switch` 命名空间写入宿主设置文档。
+需要 DeepSeek Harness **0.1.0-rc.8** 或更高版本。设置通过插件注册的 `model-switch` 命名空间写入宿主设置文档。
 
 子代理模型切换适用于 `spawn`、`fork` 等进程内子代理。外部进程代理可能独立管理自己的模型。
 
