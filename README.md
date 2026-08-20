@@ -50,11 +50,45 @@ Replace `web` with the profile DSH is actually running. DeepSeek Harness Desktop
 
 Restart DSH after installation.
 
+## Update DSH
+
+This plugin requires DeepSeek Harness **0.1.0-rc.8** or later. DSH has no `dsh update` command — install the version you want the same way you originally installed it.
+
+1. Check the installed version and what npm currently publishes:
+
+```bash
+dsh --version
+npm view @deepseek-ai/dsh dist-tags
+```
+
+`latest` can lag behind a pre-release. As of this writing, `latest` is `0.1.0-rc.7` and `next` is `0.1.0-rc.8`. Pin the version by name (`@0.1.0-rc.8` or `@next`); `@latest` alone will not pick up rc.8.
+
+2. **npx (Web):**
+
+```bash
+npx --yes @deepseek-ai/dsh@0.1.0-rc.8 web
+```
+
+3. **Global npm install:**
+
+```bash
+npm install -g @deepseek-ai/dsh@0.1.0-rc.8
+dsh --version
+```
+
+Then restart `dsh web`. DSH needs Node.js `^22.19.0` or `>=24`.
+
+4. **Desktop:** Fully **Exit** from the tray, then use **Check for Updates** in the app (or install a newer Desktop build). Desktop ships its own packaged `dsh`; updating npm or `npx` does not replace that copy. After Desktop finishes updating, restart it.
+
+DSH is still a developer preview and may change on-disk formats between releases. Back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before jumping versions.
+
+After DSH is on a compatible version, reinstall this plugin as described below.
+
 ## Reinstall / after a DSH update
 
 Reinstall the plugin when this repository has a new release, or after you upgrade DeepSeek Harness. The plugin tracks a specific DSH version (currently **0.1.0-rc.8** or later), so a host upgrade should be followed by a plugin reinstall.
 
-1. Upgrade DSH first (skip this step if only the plugin changed).
+1. Update DSH first (see [Update DSH](#update-dsh); skip this step if only the plugin changed).
 2. Reinstall with `--force` so DSH refreshes the GitHub source:
 
 ```bash
