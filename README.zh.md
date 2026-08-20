@@ -40,11 +40,36 @@
 
 ## 安装
 
+请使用 GitHub 安装源。本插件未发布到 npm，不要使用 `@lincong1987/dsh-model-switch`。
+
 ```bash
 dsh plugin --profile web add github:lincong1987/dsh-model-switch
 ```
 
+将 `web` 换成 DSH 实际正在使用的 profile。DeepSeek Harness Desktop 一般是 `desktop`。
+
 安装完成后重启 DSH。
+
+## 重装 / DSH 更新后如何安装
+
+在本仓库有新版本，或你升级了 DeepSeek Harness 之后，请重装插件。插件会跟随特定 DSH 版本（当前为 **0.1.0-rc.8** 或更高），宿主升级后应再装一次插件。
+
+1. 先升级 DSH（如果只是插件更新，可跳过这一步）。
+2. 使用 `--force` 重装，让 DSH 重新拉取 GitHub 源：
+
+```bash
+dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
+```
+
+3. 重启 DSH。
+
+在 Desktop 上，一次只执行 **一条** `plugin add`。请从托盘完全 **退出**（只关窗口不够），等 Desktop 启动完成后再重装，然后再次退出并重新打开。如果安装报错 `another plugin install recovery transaction is pending`，先退出 Desktop，等它完成启动后再试一次。若仍然卡住，退出 Desktop，删除 `%APPDATA%\DSH Desktop\plugin-install-recovery`，重新打开后再执行一次 `add --force`。
+
+若要绕过 Desktop 包装器，可在普通终端里直接跑对应版本的 DSH CLI：
+
+```powershell
+npx --yes @deepseek-ai/dsh@0.1.0-rc.8 plugin --profile desktop add --force github:lincong1987/dsh-model-switch
+```
 
 ## 使用
 
