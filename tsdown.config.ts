@@ -16,8 +16,10 @@ const PLATFORM_MODULES = [
   '@deepseek-ai/dsh-client-schema-form',
 ]
 
-const RUNTIME_STORE_EXEMPTION = '@deepseek-ai/dsh-client-runtime/client'
-const CLIENT_EXTERNALS: readonly string[] = [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION]
+// Loaded by the host through package.json `dsh.client.inject`; required at
+// runtime for the official question/plan-review carrier (PendingQuestion).
+const QUESTIONS_CARRIER = '@deepseek-ai/dsh-client-ui-user-questions/client'
+const CLIENT_EXTERNALS: readonly string[] = [...PLATFORM_MODULES, QUESTIONS_CARRIER]
 const INLINE_SAFE = /^@deepseek-ai\/dsh-(host-apiproxy|session|llm|tools|brand)(\/|$)/
 const VENDORED_LIBRARY = /^@deepseek-ai\/(cosmokit|schemastery)(\/|$)/
 const GENERATED_REMOTE = /^@deepseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/

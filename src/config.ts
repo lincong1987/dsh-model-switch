@@ -3,7 +3,6 @@
  */
 
 import z from '@deepseek-ai/schemastery'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
 import type { Config, ModelSelectionConfig, RouteSwitchConfig } from './shared.ts'
 
 export type { Config, ModelSelectionConfig, RouteSwitchConfig } from './shared.ts'
@@ -13,8 +12,8 @@ export {
   resolvePlanExecuteSelection,
 } from './shared.ts'
 
-/** Persisted settings namespace. */
-export const MODEL_SWITCH_SETTINGS_NAMESPACE = settingsNamespace('model-switch')
+/** Persisted settings namespace (kebab-case literal validated by dsh-settings). */
+export const MODEL_SWITCH_SETTINGS_NAMESPACE = 'model-switch'
 
 const SelectionSchema: z<ModelSelectionConfig> = z.object({
   provider: z.string().required(),

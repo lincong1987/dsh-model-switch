@@ -10,6 +10,18 @@ describe('mergeAgentOptions', () => {
     })
   })
 
+  it('carries the selection reasoning effort into agentOptions', () => {
+    expect(mergeAgentOptions(undefined, {
+      provider: 'p',
+      model: 'm',
+      reasoningEffort: 'high',
+    })).toEqual({
+      provider: 'p',
+      model: 'm',
+      reasoningEffort: 'high',
+    })
+  })
+
   it('lets explicit request fields win', () => {
     expect(mergeAgentOptions(
       { provider: 'req-p', model: 'req-m', maxTokens: 10 },

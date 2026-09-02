@@ -10,7 +10,6 @@ import type {
   SubagentRuntime,
 } from '@deepseek-ai/dsh-subagent'
 import type {} from '@deepseek-ai/dsh-subagent'
-import { installSettingsSection } from '@deepseek-ai/dsh-settings'
 import type {} from '@deepseek-ai/dsh-settings'
 import {
   ConfigSchema,
@@ -67,14 +66,14 @@ function withContinuableOptions(
 }
 
 /**
- * Install settings + wrap subagent start paths + optional child effort injection.
+ * Install settings + wrap subagent start paths.
  * @param ctx - host plugin context.
  * @param config - composition-entry defaults.
  */
 export function apply(ctx: Context, config: ModelSwitchConfig = {}): void {
   let current: () => ModelSwitchConfig = () => config
 
-  installSettingsSection(ctx, MODEL_SWITCH_SETTINGS_NAMESPACE, ConfigSchema, config, {
+  ctx.settings.installSection(ctx, MODEL_SWITCH_SETTINGS_NAMESPACE, ConfigSchema, config, {
     setSource: (source) => { current = source },
     onChange: () => { /* live reads via current() */ },
   })
@@ -117,16 +116,4 @@ export function apply(ctx: Context, config: ModelSwitchConfig = {}): void {
       runtime.startContinuable = originalStartContinuable
     }
   }, 'model-switch: wrap subagent start')
-
-  // Reasoning effort is not part of AgentOptions; inject on child agent/request.
-  ctx.on('agent/created', ({ agent }) => {
-    if (agent.session.header.origin !== 'subagent') return
-    const selection = resolveCustomSelection(current().subagent)
-    const effort = selection?.reasoningEffort
-    if (effort === undefined || effort.length === 0) return
-    agent.ctx.on('agent/request', async (_payload, next) => {
-      const seed = await next()
-      return Object.assign({}, seed, { reasoningEffort: effort })
-    })
-  })
 }

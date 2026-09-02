@@ -1,11 +1,11 @@
 /**
  * Browser mirror of the host `model-switch` settings namespace.
  *
- * DSH 0.1.1-rc.2 serves plugin-registered namespaces through settings.*;
+ * DSH 0.1.2-alpha.4 serves plugin-registered namespaces through settings.*;
  * this store is a stable snapshot wrapper over `ctx.settingsScope`.
  */
 
-import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 import type { Config, RouteSwitchConfig } from '../shared.ts'
 
 export interface ConfigStoreSnapshot {

@@ -3,19 +3,18 @@
  */
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ModelSelectionConfig, RouteSwitchConfig } from '../shared.ts'
 import { ConfigStore } from './config-store.ts'
 import { IconModelSwitch } from './IconModelSwitch.tsx'
-import { ModelPicker } from './ModelPicker.tsx'
+import { ModelPicker, type ModelCatalogAccess } from './ModelPicker.tsx'
 import type { LocaleKey } from './locales.ts'
 import css from './styles.module.css'
 
 export interface SettingsInjected {
   store: ConfigStore
-  api: ConnectionHandle['api']
+  access: ModelCatalogAccess
   currentSessionId: () => SessionId | undefined
   t: (key: LocaleKey) => string
 }
@@ -28,11 +27,11 @@ function RouteBlock(props: {
   route: RouteSwitchConfig
   onChange: (next: RouteSwitchConfig) => void
   sessionId: SessionId | undefined
-  api: ConnectionHandle['api']
+  access: ModelCatalogAccess
   t: (key: LocaleKey) => string
   busy: boolean
 }) {
-  const { title, hint, route, onChange, sessionId, api, t, busy } = props
+  const { title, hint, route, onChange, sessionId, access, t, busy } = props
   const follow = route.mode !== 'custom'
   return (
     <section className={css.block}>
@@ -64,7 +63,7 @@ function RouteBlock(props: {
         <div className={css.pickerWrap}>
           <ModelPicker
             sessionId={sessionId}
-            api={api}
+            access={access}
             value={route.selection}
             disabled={busy}
             t={t}
@@ -80,8 +79,8 @@ function RouteBlock(props: {
 }
 
 export function SettingsSection(props: SettingsSectionProps) {
-  const { store, api, currentSessionId, t } = props
-  if (store === undefined || api === undefined || currentSessionId === undefined || t === undefined) {
+  const { store, access, currentSessionId, t } = props
+  if (store === undefined || access === undefined || currentSessionId === undefined || t === undefined) {
     return null
   }
 
@@ -140,7 +139,7 @@ export function SettingsSection(props: SettingsSectionProps) {
         hint={t('subagentHint')}
         route={subagent}
         sessionId={sessionId}
-        api={api}
+        access={access}
         t={t}
         busy={busy || snap.status === 'loading'}
         onChange={(next) => { writeRoute('subagent', next) }}
@@ -150,7 +149,7 @@ export function SettingsSection(props: SettingsSectionProps) {
         hint={t('planHint')}
         route={planExecute}
         sessionId={sessionId}
-        api={api}
+        access={access}
         t={t}
         busy={busy || snap.status === 'loading'}
         onChange={(next) => { writeRoute('planExecute', next) }}

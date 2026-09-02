@@ -1,6 +1,6 @@
 {
   "name": "dsh-model-switch",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "DSH plugin: choose models for subagents and plan execution separately / 为子代理和计划执行选择更合适的模型",
   "type": "module",
   "main": "lib/index.js",
@@ -60,9 +60,12 @@
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation",
         "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-user-questions",
+        "@deepseek-ai/dsh-api-session-controller",
         "@deepseek-ai/dsh-api-remotes"
       ],
       "platform": "web"
@@ -76,17 +79,21 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-agent": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-api-remotes": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-locale": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-runtime": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "^0.1.1-rc.2",
-    "@deepseek-ai/dsh-subagent": "^0.1.1-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/dsh-agent": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-api-remotes": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-api-session-controller": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-locale": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-conversation": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-primitives": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-renderer": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-session": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-settings": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-slots": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-user-questions": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-settings": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-subagent": "^0.1.2-alpha.4",
+    "@deepseek-ai/dsh-user-questions": "^0.1.2-alpha.4",
+    "@deepseek-ai/schemastery": "^3.18.2",
     "react": "^18.2.0"
   },
   "peerDependenciesMeta": {
@@ -99,10 +106,10 @@
     "@deepseek-ai/dsh-api-remotes": {
       "optional": true
     },
-    "@deepseek-ai/dsh-client-locale": {
+    "@deepseek-ai/dsh-api-session-controller": {
       "optional": true
     },
-    "@deepseek-ai/dsh-client-runtime": {
+    "@deepseek-ai/dsh-client-locale": {
       "optional": true
     },
     "@deepseek-ai/dsh-client-ui-conversation": {
@@ -111,16 +118,28 @@
     "@deepseek-ai/dsh-client-ui-primitives": {
       "optional": true
     },
+    "@deepseek-ai/dsh-client-ui-renderer": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-client-ui-session": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-client-ui-settings": {
       "optional": true
     },
     "@deepseek-ai/dsh-client-ui-slots": {
       "optional": true
     },
+    "@deepseek-ai/dsh-client-ui-user-questions": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-settings": {
       "optional": true
     },
     "@deepseek-ai/dsh-subagent": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-user-questions": {
       "optional": true
     },
     "@deepseek-ai/schemastery": {
@@ -132,18 +151,22 @@
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-agent": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-api-remotes": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-locale": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-runtime": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-conversation": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-primitives": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-settings": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-client-ui-slots": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-host-webserver": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-settings": "0.1.1-rc.2",
-    "@deepseek-ai/dsh-subagent": "0.1.1-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/dsh-agent": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-api-remotes": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-api-session-controller": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-locale": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-conversation": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-primitives": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-session": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-settings": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-slots": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-client-ui-user-questions": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-host-webserver": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-settings": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-subagent": "0.1.2-alpha.4",
+    "@deepseek-ai/dsh-user-questions": "0.1.2-alpha.4",
+    "@deepseek-ai/schemastery": "^3.18.2",
     "@types/node": "^24.13.3",
     "@types/react": "~18.3.1",
     "@types/react-dom": "^18.3.7",
@@ -154,5 +177,10 @@
     "typescript": "^5.9.3",
     "unrun": "^0.3.1",
     "vitest": "^3.2.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "@deepseek-ai/dsh-typert-protocol@<0.1.2": "0.1.2-alpha.4"
+    }
   }
 }

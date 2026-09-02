@@ -7,9 +7,7 @@ import {
   useEffect, useId, useMemo, useRef, useState,
   type FocusEvent, type KeyboardEvent,
 } from 'react'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SessionModels } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ModelCatalog, ModelSelection, SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 import {
   IconCheckOutline16,
   IconChevronDownOutline14,
@@ -19,9 +17,17 @@ import type { ModelSelectionConfig } from '../shared.ts'
 import type { LocaleKey } from './locales.ts'
 import css from './ModelPicker.module.css'
 
+/** Catalog + current-selection access supplied by the plugin entry. */
+export interface ModelCatalogAccess {
+  /** Load the deployment model catalog; rejects with a readable error. */
+  loadCatalog: () => Promise<ModelCatalog>
+  /** The session's durable selection (`next` over `lastUsed`), if any. */
+  currentSelection: (sessionId: SessionId) => ModelSelection | undefined
+}
+
 export interface ModelPickerProps {
   sessionId: SessionId | undefined
-  api: ConnectionHandle['api']
+  access: ModelCatalogAccess
   value: ModelSelectionConfig | undefined
   onChange: (next: ModelSelectionConfig) => void
   t: (key: LocaleKey) => string
@@ -41,10 +47,10 @@ interface EffortChoice {
 }
 
 export function ModelPicker({
-  sessionId, api, value, onChange, t, disabled, className,
+  sessionId, access, value, onChange, t, disabled, className,
   placement = 'bottom',
 }: ModelPickerProps) {
-  const [catalog, setCatalog] = useState<SessionModels | null>(null)
+  const [catalog, setCatalog] = useState<ModelCatalog | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
@@ -59,9 +65,9 @@ export function ModelPicker({
   valueRef.current = value
   onChangeRef.current = onChange
 
-  const seedFromCurrent = (current: SessionModels['current']): void => {
+  const seedFromCurrent = (current: ModelSelection | undefined): void => {
     if (valueRef.current !== undefined) return
-    if (!current.provider || !current.model) return
+    if (current === undefined || !current.provider || !current.model) return
     onChangeRef.current({
       provider: current.provider,
       model: current.model,
@@ -77,14 +83,9 @@ export function ModelPicker({
     }
     setLoading(true)
     setError(null)
-    void api.sessions.models({ sessionId }).then(({ result }) => {
-      setLoading(false)
-      if (!result.ok) {
-        setError(`${result.error.code}: ${result.error.message}`)
-        return
-      }
-      setCatalog(result.value)
-      seedFromCurrent(result.value.current)
+    void access.loadCatalog().then((next) => {
+      setCatalog(next)
+      seedFromCurrent(access.currentSelection(sessionId) ?? next.default)
     }).catch((cause: unknown) => {
       setLoading(false)
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -100,22 +101,18 @@ export function ModelPicker({
     }
     setLoading(true)
     setError(null)
-    void api.sessions.models({ sessionId }).then(({ result }) => {
+    void access.loadCatalog().then((next) => {
       if (cancelled) return
       setLoading(false)
-      if (!result.ok) {
-        setError(`${result.error.code}: ${result.error.message}`)
-        return
-      }
-      setCatalog(result.value)
-      seedFromCurrent(result.value.current)
+      setCatalog(next)
+      seedFromCurrent(access.currentSelection(sessionId) ?? next.default)
     }).catch((cause: unknown) => {
       if (cancelled) return
       setLoading(false)
       setError(cause instanceof Error ? cause.message : String(cause))
     })
     return () => { cancelled = true }
-  }, [sessionId, api])
+  }, [sessionId, access])
 
   useEffect(() => {
     if (!open) return

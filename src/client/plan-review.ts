@@ -1,13 +1,12 @@
 /**
- * Local plan-review helpers (copied contract; avoid cross-plugin value imports).
+ * Local plan-review narrowing over the official question carrier.
+ * The carrier (PendingQuestion/answer protocol) is owned by ui-user-questions;
+ * only this pure narrowing lives here.
  */
 
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
-import type { QuestionResponsePayload } from '@deepseek-ai/dsh-api-remotes/client'
+import type { QuestionWait } from '@deepseek-ai/dsh-client-ui-user-questions/client'
 
-export type QuestionWait = PendingWait<'question'>
-export type QuestionAnswer = QuestionResponsePayload['answer']
-type QuestionItem = QuestionWait['payload']['questions'][number]
+type QuestionItem = QuestionWait['questions'][number]
 type QuestionOption = NonNullable<QuestionItem['options']>[number]
 
 export interface PlanReview {
@@ -16,6 +15,15 @@ export interface PlanReview {
   plan: string
   approve: QuestionOption
   decline?: QuestionOption
+}
+
+/** The carrier kind is `question` or `plan-review`; both arrive as QuestionWait. */
+export function isQuestionCarrier(
+  pendingInteraction: unknown,
+): pendingInteraction is QuestionWait {
+  if (typeof pendingInteraction !== 'object' || pendingInteraction === null) return false
+  const kind = (pendingInteraction as { kind?: unknown }).kind
+  return kind === 'question' || kind === 'plan-review'
 }
 
 export function planReviewOf(questions: readonly QuestionItem[]): PlanReview | undefined {
@@ -35,40 +43,5 @@ export function planReviewOf(questions: readonly QuestionItem[]): PlanReview | u
     plan: question.detail,
     approve,
     ...decline === undefined ? {} : { decline },
-  }
-}
-
-export class PendingQuestion {
-  constructor(private readonly wait: QuestionWait) {}
-
-  get key(): string {
-    return this.wait.key
-  }
-
-  get questions(): QuestionWait['payload']['questions'] {
-    return this.wait.payload.questions
-  }
-
-  get sessionId(): QuestionWait['sessionId'] {
-    return this.wait.sessionId
-  }
-
-  async answer(answer: QuestionAnswer): Promise<void> {
-    const receipt = await this.wait.respond({
-      ok: true, value: { sessionId: this.wait.sessionId, answer },
-    })
-    if (!receipt.accepted) {
-      throw new Error(`question response rejected: ${receipt.reason}`)
-    }
-  }
-
-  async cancel(): Promise<void> {
-    const receipt = await this.wait.respond({
-      ok: false,
-      error: { code: 'cancelled', message: 'the user closed this question request', details: {} },
-    })
-    if (!receipt.accepted) {
-      throw new Error(`question cancellation rejected: ${receipt.reason}`)
-    }
   }
 }
