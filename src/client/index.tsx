@@ -45,6 +45,7 @@ export const inject = [
   'locale',
   'sessions',
   'remote',
+  'remote.session',
   'settingsScope',
 ]
 

@@ -73,9 +73,14 @@ function withContinuableOptions(
 export function apply(ctx: Context, config: ModelSwitchConfig = {}): void {
   let current: () => ModelSwitchConfig = () => config
 
-  ctx.settings.installSection(ctx, MODEL_SWITCH_SETTINGS_NAMESPACE, ConfigSchema, config, {
-    setSource: (source) => { current = source },
-    onChange: () => { /* live reads via current() */ },
+  // The settings provider is optional: attach the namespace while a provider
+  // is present and keep falling back to the composition entry otherwise.
+  // `ctx.settings` is only reachable on a context that injected the service.
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, MODEL_SWITCH_SETTINGS_NAMESPACE, ConfigSchema, config, {
+      setSource: (source) => { current = source },
+      onChange: () => { /* live reads via current() */ },
+    })
   })
 
   const labels = new SessionLabelRegistry()
