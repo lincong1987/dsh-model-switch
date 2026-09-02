@@ -1,0 +1,4 @@
+{
+  "name": "dsh-model-switch",
+  "install": "pnpm install --frozen-lockfile"
+}
