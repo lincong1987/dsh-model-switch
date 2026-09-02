@@ -2,13 +2,17 @@
  * Browser half of dsh-model-switch: settings, plan-review, subagent model badges.
  */
 
-import type { ClientContext, SessionId, SubagentAddress } from '@deepseek-ai/dsh-client-runtime/client'
+import type { Context } from '@deepseek-ai/cordis'
+import type { ClientRemote, SessionId, SubagentAddress } from '@deepseek-ai/dsh-api-remotes/client'
+import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type {} from '@deepseek-ai/dsh-api-remotes/client'
+import type { ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
 import { MODEL_SWITCH_NS, type Config } from '../shared.ts'
 import { en, zh, type LocaleKey } from './locales.ts'
 import { ConfigStore } from './config-store.ts'
@@ -24,6 +28,7 @@ import {
   type SubagentCatalogInjected,
 } from './SubagentCatalogAction.tsx'
 import { SessionLabelStore } from './session-label-store.ts'
+import type { ModelCatalogAccess } from './ModelPicker.tsx'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -38,24 +43,43 @@ const NS = 'model-switch'
 export const inject = [
   'slots',
   'locale',
-  'connection',
   'sessions',
   'remote',
   'settingsScope',
 ]
 
-export function apply(ctx: ClientContext): void {
+export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'model-switch: dictionaries')
 
   const t = ctx.locale.bind(NS) as (key: LocaleKey) => string
-  const connection = ctx.get('connection') as ConnectionHandle
+  // The host `dsh-session` augmentation wins the Context.sessions interface
+  // merge (it loads first through workspace types); the runtime service here is
+  // the client ISessions implementation, so retype at the single access point.
+  const sessions = ctx.sessions as unknown as ISessions
   const store = new ConfigStore(ctx.settingsScope.bind<Config>({ namespace: MODEL_SWITCH_NS }))
   const labels = new SessionLabelStore()
 
+  const remote = ctx.remote as ClientRemote
+  const currentSelection = (sessionId: SessionId): ModelSelection | undefined => {
+    const row = sessions.list.getSnapshot().byId[sessionId]
+    const selection = row?.projectionValues?.modelSelection
+    return selection?.next ?? selection?.lastUsed ?? undefined
+  }
+  const access: ModelCatalogAccess = {
+    async loadCatalog() {
+      const result = await remote.session.modelCatalog()
+      if (!result.ok) {
+        throw new Error(`${result.error.code}: ${result.error.message}`)
+      }
+      return result.value
+    },
+    currentSelection,
+  }
+
   const settingsInject = (): SettingsInjected => ({
     store,
-    api: connection.api,
-    currentSessionId: () => ctx.sessions.list.getSnapshot().current as SessionId | undefined,
+    access,
+    currentSessionId: () => sessions.list.getSnapshot().current as SessionId | undefined,
     t,
   })
 
@@ -69,10 +93,11 @@ export function apply(ctx: ClientContext): void {
 
   const planInject = (): PlanReviewComposerInjected => ({
     store,
-    api: connection.api,
+    remote,
+    access,
     t,
     isSessionRunning: (sessionId: SessionId) => (
-      ctx.sessions.list.getSnapshot().byId[sessionId]?.running === true
+      sessions.list.getSnapshot().byId[sessionId]?.running === true
     ),
   })
 
@@ -94,15 +119,15 @@ export function apply(ctx: ClientContext): void {
     inject: badgeInject,
   }, SubagentModelBadge))
 
-  const catalogInject = (_parentSessionId: SessionId): SubagentCatalogInjected => ({
+  const catalogInject = (): SubagentCatalogInjected => ({
     openChild(address: SubagentAddress) {
-      ctx.sessions.openSubagent(address)
+      sessions.openSubagent(address)
     },
     refresh(parentSessionId: SessionId) {
-      void ctx.sessions.refreshSubagents(parentSessionId)
+      void sessions.refreshSubagents(parentSessionId)
     },
     setCatalogOpen(parentSessionId: SessionId, open: boolean) {
-      ctx.sessions.setSubagentCatalogOpen(parentSessionId, open)
+      sessions.setSubagentCatalogOpen(parentSessionId, open)
     },
     labels,
   })

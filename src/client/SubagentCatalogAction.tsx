@@ -2,16 +2,17 @@ import {
   useEffect, useMemo, useRef, useState, useSyncExternalStore,
   type KeyboardEvent, type MouseEvent,
 } from 'react'
-import {
-  indexSubagentDescendants, type SessionId, type SessionListState,
-  type SessionSummary, type SubagentAddress, type SubagentCatalogSnapshot,
-} from '@deepseek-ai/dsh-client-runtime/client'
+import type {
+  SessionListState,
+  SessionSummary, SubagentCatalogSnapshot,
+} from '@deepseek-ai/dsh-api-session-controller/client'
+import type { SessionId, SubagentAddress } from '@deepseek-ai/dsh-api-remotes/client'
+import type {} from '@deepseek-ai/dsh-subagent/client'
 import {
   IconChevronDownOutline14, IconChevronRightOutline14, IconRefreshOutline14, StateDot,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type {} from '@deepseek-ai/dsh-subagent/client'
 import type { SessionLabelStore } from './session-label-store.ts'
 import css from './SubagentCatalogAction.module.css'
 
@@ -23,6 +24,39 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 
 type CatalogEntry = SubagentCatalogSnapshot['entries'][number]
 type Catalogs = SessionListState['subagentsByParent']
+
+interface SubagentDescendants {
+  count: number
+  runningCount: number
+}
+
+/** Tally subagent-origin descendants (all depths) per parent session id. */
+function indexSubagentDescendants(
+  summaries: Readonly<Record<SessionId, SessionSummary>>,
+): Map<SessionId, SubagentDescendants> {
+  const children = new Map<SessionId, SessionSummary[]>()
+  for (const summary of Object.values(summaries)) {
+    if (summary.origin !== 'subagent' || summary.parentId === undefined) continue
+    const siblings = children.get(summary.parentId)
+    if (siblings === undefined) children.set(summary.parentId, [summary])
+    else siblings.push(summary)
+  }
+  const index = new Map<SessionId, SubagentDescendants>()
+  for (const [rootId, roots] of children) {
+    let count = 0
+    let runningCount = 0
+    const queue = [...roots]
+    while (queue.length > 0) {
+      const node = queue.pop()!
+      count += 1
+      if (node.running) runningCount += 1
+      const grandChildren = children.get(node.id)
+      if (grandChildren !== undefined) queue.push(...grandChildren)
+    }
+    index.set(rootId, { count, runningCount })
+  }
+  return index
+}
 
 interface TokenUsageBuckets {
   uncachedInputTokens: number
@@ -457,8 +491,8 @@ type LoadedProps = Omit<SubagentCatalogActionProps, keyof SubagentCatalogInjecte
 function SubagentCatalogActionLoaded({
   sessionId, useSessions, openChild, refresh, setCatalogOpen, labels, t,
 }: LoadedProps) {
-  const catalogs = useSessions(state => state.subagentsByParent)
-  const summaries = useSessions(state => state.byId)
+  const catalogs = useSessions((state: SessionListState) => state.subagentsByParent)
+  const summaries = useSessions((state: SessionListState) => state.byId)
   const catalog = catalogs[sessionId]
   const labelSnap = useSyncExternalStore(labels.subscribe, labels.getSnapshot)
   const modelLabels = labelSnap.value
@@ -476,7 +510,7 @@ function SubagentCatalogActionLoaded({
   const observedCatalogs = useRef(new Set<SessionId>())
   const setCatalogOpenRef = useRef(setCatalogOpen)
   setCatalogOpenRef.current = setCatalogOpen
-  const healthy = catalog?.entries.filter(entry => entry.kind === 'child') ?? []
+  const healthy = catalog?.entries.filter((entry: CatalogEntry) => entry.kind === 'child') ?? []
   const descendants = useMemo(
     () => indexSubagentDescendants(summaries).get(sessionId) ?? NO_DESCENDANTS,
     [sessionId, summaries],

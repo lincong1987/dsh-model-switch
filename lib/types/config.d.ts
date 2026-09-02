@@ -5,7 +5,7 @@ import z from '@deepseek-ai/schemastery';
 import type { Config } from './shared.ts';
 export type { Config, ModelSelectionConfig, RouteSwitchConfig } from './shared.ts';
 export { MODEL_SWITCH_NS, resolveCustomSelection, resolvePlanExecuteSelection, } from './shared.ts';
-/** Persisted settings namespace. */
-export declare const MODEL_SWITCH_SETTINGS_NAMESPACE: import("@deepseek-ai/dsh-settings").SettingsNamespace;
+/** Persisted settings namespace (kebab-case literal validated by dsh-settings). */
+export declare const MODEL_SWITCH_SETTINGS_NAMESPACE = "model-switch";
 /** Schemastery schema for the settings section / composition entry. */
 export declare const ConfigSchema: z<Config>;

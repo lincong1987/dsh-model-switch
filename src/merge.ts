@@ -16,6 +16,9 @@ export function mergeAgentOptions(
   return {
     provider: selection.provider,
     model: selection.model,
+    ...selection.reasoningEffort === undefined
+      ? {}
+      : { reasoningEffort: selection.reasoningEffort as AgentOptions['reasoningEffort'] },
     ...requested,
   }
 }

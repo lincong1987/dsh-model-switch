@@ -1,4 +1,4 @@
-import { type SessionId, type SubagentAddress } from '@deepseek-ai/dsh-client-runtime/client';
+import type { SessionId, SubagentAddress } from '@deepseek-ai/dsh-api-remotes/client';
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
 import type { SessionLabelStore } from './session-label-store.ts';
 declare module '@deepseek-ai/dsh-client-ui-slots' {

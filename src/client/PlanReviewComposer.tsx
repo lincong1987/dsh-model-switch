@@ -1,20 +1,24 @@
 /**
  * Composer-chain entry that claims plan-review waits (higher priority than stock).
+ * The question carrier is the official ui-user-questions value; the plan-review
+ * narrowing is local (plan-review.ts).
  */
 
 import { useMemo } from 'react'
+import type { QuestionWait } from '@deepseek-ai/dsh-client-ui-user-questions/client'
 import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientRemote, SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { ConfigStore } from './config-store.ts'
 import type { LocaleKey } from './locales.ts'
+import type { ModelCatalogAccess } from './ModelPicker.tsx'
+import { planReviewOf, isQuestionCarrier } from './plan-review.ts'
 import { PlanReviewPanel } from './PlanReviewPanel.tsx'
-import { PendingQuestion, planReviewOf, type QuestionWait } from './plan-review.ts'
 
 export interface PlanReviewComposerInjected {
   store: ConfigStore
-  api: ConnectionHandle['api']
+  remote: ClientRemote
+  access: ModelCatalogAccess
   t: (key: LocaleKey) => string
   isSessionRunning: (sessionId: SessionId) => boolean
 }
@@ -26,20 +30,18 @@ export type PlanReviewComposerProps =
   & Partial<PlanReviewComposerInjected>
 
 /** Select only plan-review question waits. */
-export function selectPlanReview({ interactions }: ComposerChainProps): QuestionWait | null {
-  const wait = interactions.find((item): item is QuestionWait => item.kind === 'question')
-  if (wait === undefined) return null
-  if (planReviewOf(wait.payload.questions) === undefined) return null
-  return wait
+export function selectPlanReview({ pendingInteraction }: ComposerChainProps): QuestionWait | null {
+  if (!isQuestionCarrier(pendingInteraction)) return null
+  return planReviewOf(pendingInteraction.questions) !== undefined ? pendingInteraction : null
 }
 
 export function PlanReviewComposer(props: PlanReviewComposerProps) {
-  const { matched, store, api, t, isSessionRunning } = props
-  const pending = useMemo(() => new PendingQuestion(matched), [matched])
-  const review = useMemo(() => planReviewOf(pending.questions), [pending])
+  const { matched, store, remote, access, t, isSessionRunning } = props
+  const review = useMemo(() => planReviewOf(matched.questions), [matched])
   if (
     store === undefined
-    || api === undefined
+    || remote === undefined
+    || access === undefined
     || t === undefined
     || isSessionRunning === undefined
     || review === undefined
@@ -48,10 +50,11 @@ export function PlanReviewComposer(props: PlanReviewComposerProps) {
   }
   return (
     <PlanReviewPanel
-      pending={pending}
+      pending={matched}
       review={review}
       store={store}
-      api={api}
+      remote={remote}
+      access={access}
       t={t}
       isSessionRunning={isSessionRunning}
     />

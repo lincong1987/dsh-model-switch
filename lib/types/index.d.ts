@@ -14,7 +14,7 @@ export declare const Config: import("@deepseek-ai/schemastery").default<ModelSwi
 export declare const name = "model-switch";
 export declare const inject: string[];
 /**
- * Install settings + wrap subagent start paths + optional child effort injection.
+ * Install settings + wrap subagent start paths.
  * @param ctx - host plugin context.
  * @param config - composition-entry defaults.
  */

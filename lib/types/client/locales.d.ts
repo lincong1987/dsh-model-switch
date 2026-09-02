@@ -28,6 +28,9 @@ export declare const zh: {
     planDecline: string;
     planApprove: string;
     planModelLabel: string;
+    codeCopy: string;
+    codeCopied: string;
+    footnotes: string;
 };
 export declare const en: {
     nav: string;
@@ -58,5 +61,8 @@ export declare const en: {
     planDecline: string;
     planApprove: string;
     planModelLabel: string;
+    codeCopy: string;
+    codeCopied: string;
+    footnotes: string;
 };
 export type LocaleKey = keyof typeof zh;

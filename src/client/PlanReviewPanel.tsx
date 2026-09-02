@@ -4,22 +4,28 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-api-remotes/client'
-import type { ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type {
+  ClientRemote,
+  ModelSelection,
+  SessionId,
+} from '@deepseek-ai/dsh-api-remotes/client'
+import type {
+  PlanReview,
+  PendingQuestion,
+} from '@deepseek-ai/dsh-client-ui-user-questions/client'
 import type { ModelSelectionConfig } from '../shared.ts'
 import { resolveCustomSelection, resolvePlanExecuteSelection } from '../shared.ts'
 import { ConfigStore } from './config-store.ts'
-import { ModelPicker } from './ModelPicker.tsx'
+import { ModelPicker, type ModelCatalogAccess } from './ModelPicker.tsx'
 import type { LocaleKey } from './locales.ts'
-import { PendingQuestion, type PlanReview } from './plan-review.ts'
 import css from './styles.module.css'
 
 export interface PlanReviewPanelProps {
   pending: PendingQuestion
   review: PlanReview
   store: ConfigStore
-  api: ConnectionHandle['api']
+  remote: ClientRemote
+  access: ModelCatalogAccess
   t: (key: LocaleKey) => string
   /** Live session running bit (survives panel unmount via list snapshot). */
   isSessionRunning: (sessionId: SessionId) => boolean
@@ -35,21 +41,12 @@ function sameSelection(a: ModelSelectionConfig, b: ModelSelection): boolean {
     && (a.reasoningEffort ?? undefined) === (b.reasoningEffort ?? undefined)
 }
 
-function toConfig(selection: ModelSelection): ModelSelectionConfig | undefined {
-  if (!selection.provider || !selection.model) return undefined
-  return {
-    provider: selection.provider,
-    model: selection.model,
-    ...selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort },
-  }
-}
-
 async function selectModel(
-  api: ConnectionHandle['api'],
+  remote: ClientRemote,
   sessionId: SessionId,
   selection: ModelSelectionConfig,
 ): Promise<void> {
-  const { result } = await api.sessions.selectModel({
+  const result = await remote.session.selectModel({
     sessionId,
     provider: selection.provider,
     model: selection.model,
@@ -80,7 +77,7 @@ async function waitSessionIdle(
 }
 
 export function PlanReviewPanel({
-  pending, review, store, api, t, isSessionRunning,
+  pending, review, store, remote, access, t, isSessionRunning,
 }: PlanReviewPanelProps) {
   const snap = useSyncExternalStore(
     (listener) => store.subscribe(listener),
@@ -96,6 +93,11 @@ export function PlanReviewPanel({
   const [pickerReady, setPickerReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const markdownLabels = useMemo(() => ({
+    code: { copyLabel: t('codeCopy'), copiedLabel: t('codeCopied') },
+    footnotes: t('footnotes'),
+  }), [t])
 
   useEffect(() => {
     if (!settingsReady || pickerReady) return
@@ -119,13 +121,9 @@ export function PlanReviewPanel({
       let switched = false
 
       if (effective !== undefined) {
-        const { result } = await api.sessions.models({ sessionId: pending.sessionId })
-        if (!result.ok) {
-          throw new Error(`${result.error.code}: ${result.error.message}`)
-        }
-        previous = toConfig(result.value.current)
-        if (previous === undefined || !sameSelection(effective, result.value.current)) {
-          await selectModel(api, pending.sessionId, effective)
+        previous = toConfig(access.currentSelection(pending.sessionId))
+        if (previous === undefined || !sameSelection(effective, previous)) {
+          await selectModel(remote, pending.sessionId, effective)
           switched = true
         }
       }
@@ -135,7 +133,7 @@ export function PlanReviewPanel({
       if (switched && previous !== undefined) {
         try {
           await waitSessionIdle(pending.sessionId, isSessionRunning)
-          await selectModel(api, pending.sessionId, previous)
+          await selectModel(remote, pending.sessionId, previous)
         } catch (cause: unknown) {
           console.warn(
             'dsh-model-switch: failed to restore main session model after plan execute',
@@ -160,7 +158,7 @@ export function PlanReviewPanel({
           {t('planHeader')}
         </div>
         <div className={css.body} data-plan-review-scroll>
-          <MarkdownText text={review.plan} />
+          <MarkdownText text={review.plan} labels={markdownLabels} />
         </div>
         <div className={css.footer}>
           <div className={css.feedback} role="status">{error}</div>
@@ -187,7 +185,7 @@ export function PlanReviewPanel({
               {pickerReady ? (
                 <ModelPicker
                   sessionId={pending.sessionId}
-                  api={api}
+                  access={access}
                   value={panelSelection}
                   disabled={busy}
                   t={t}
@@ -209,4 +207,13 @@ export function PlanReviewPanel({
       </section>
     </div>
   )
+}
+
+function toConfig(selection: ModelSelection | undefined): ModelSelectionConfig | undefined {
+  if (selection === undefined || !selection.provider || !selection.model) return undefined
+  return {
+    provider: selection.provider,
+    model: selection.model,
+    ...selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort },
+  }
 }
