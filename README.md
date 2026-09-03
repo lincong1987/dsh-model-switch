@@ -52,7 +52,7 @@ Restart DSH after installation.
 
 ## Update DSH
 
-This plugin requires DeepSeek Harness **0.1.2-alpha.5** or later. DSH has no `dsh update` command — install the version you want the same way you originally installed it.
+This plugin requires DeepSeek Harness **0.1.2-rc.1** or later. DSH has no `dsh update` command — install the version you want the same way you originally installed it.
 
 1. Check the installed version and what npm currently publishes:
 
@@ -61,18 +61,18 @@ dsh --version
 npm view @deepseek-ai/dsh dist-tags
 ```
 
-As of 2026-09-02, `latest` and `next` point to `0.1.1-rc.2`, while the `alpha` tag points to `0.1.2-alpha.5` (this plugin's current target). Pin the exact version (`@0.1.2-alpha.5`) when reproducibility matters.
+As of 2026-09-03, `latest` points to `0.1.1-rc.2`, `next` points to `0.1.2-rc.1` (this plugin's current target), and the `alpha` tag points to `0.1.2-alpha.5`. Pin the exact version (`@0.1.2-rc.1`) when reproducibility matters.
 
 2. **npx (Web):**
 
 ```bash
-npx --yes @deepseek-ai/dsh@0.1.2-alpha.5 web
+npx --yes @deepseek-ai/dsh@0.1.2-rc.1 web
 ```
 
 3. **Global npm install:**
 
 ```bash
-npm install -g @deepseek-ai/dsh@0.1.2-alpha.5
+npm install -g @deepseek-ai/dsh@0.1.2-rc.1
 dsh --version
 ```
 
@@ -80,13 +80,13 @@ Then restart `dsh web`. DSH needs Node.js `^22.19.0` or `>=24`.
 
 4. **Desktop:** Fully **Exit** from the tray, then use **Check for Updates** in the app (or install a newer Desktop build). Desktop ships its own packaged `dsh`; updating npm or `npx` does not replace that copy. After Desktop finishes updating, restart it.
 
-DSH is still a developer preview and may change on-disk formats between releases. Back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before jumping versions. In particular, 0.1.0-rc.8 changed the SQLite storage format incompatibly, and 0.1.2-alpha.3 removed the optional SQLite session backend entirely (existing data is kept but needs an older version to export); treat local sessions as non-portable when crossing those boundaries. 0.1.2-alpha.5 fixes upgrading from 0.1.1-rc.2 or 0.1.2-alpha.3 (the app now starts and session list titles are kept), so upgrade straight to alpha.5 rather than alpha.4.
+DSH is still a developer preview and may change on-disk formats between releases. Back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before jumping versions. In particular, 0.1.0-rc.8 changed the SQLite storage format incompatibly, and 0.1.2-alpha.3 removed the optional SQLite session backend entirely (existing data is kept but needs an older version to export); treat local sessions as non-portable when crossing those boundaries. 0.1.2-alpha.5 fixed upgrading from 0.1.1-rc.2 or 0.1.2-alpha.3 (the app now starts and session list titles are kept); 0.1.2-rc.1 is the current release-candidate line that this plugin targets.
 
 After DSH is on a compatible version, reinstall this plugin as described below.
 
 ## Reinstall / after a DSH update
 
-Reinstall the plugin when this repository has a new release, or after you upgrade DeepSeek Harness. The plugin tracks a specific DSH version (currently **0.1.2-alpha.5** or later), so a host upgrade should be followed by a plugin reinstall.
+Reinstall the plugin when this repository has a new release, or after you upgrade DeepSeek Harness. The plugin tracks a specific DSH version (currently **0.1.2-rc.1** or later), so a host upgrade should be followed by a plugin reinstall.
 
 1. Update DSH first (see [Update DSH](#update-dsh); skip this step if only the plugin changed).
 2. Reinstall with `--force` so DSH refreshes the GitHub source:
@@ -102,7 +102,7 @@ On Desktop, run **one** `plugin add` at a time. Fully **Exit** from the tray (cl
 To bypass the Desktop wrapper, run the matching DSH CLI in a normal terminal:
 
 ```powershell
-npx --yes @deepseek-ai/dsh@0.1.2-alpha.5 plugin --profile desktop add --force github:lincong1987/dsh-model-switch
+npx --yes @deepseek-ai/dsh@0.1.2-rc.1 plugin --profile desktop add --force github:lincong1987/dsh-model-switch
 ```
 
 ## Use
@@ -117,7 +117,7 @@ The model selected in the plan review panel takes priority over the saved plan-e
 
 ## Compatibility
 
-Requires DeepSeek Harness **0.1.2-alpha.5** or later. Settings are stored in the host settings document through the plugin's registered `model-switch` namespace.
+Requires DeepSeek Harness **0.1.2-rc.1** or later. Settings are stored in the host settings document through the plugin's registered `model-switch` namespace.
 
 Subagent model switching applies to in-process subagents such as `spawn` and `fork`. External-process agents may manage their models independently.
 
