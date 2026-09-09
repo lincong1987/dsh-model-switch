@@ -16,6 +16,18 @@ export interface ConfigStoreSnapshot {
 
 const EMPTY: Config = {}
 
+/**
+ * Strip own-properties whose value is `undefined`.
+ *
+ * The `settings/mutate` strict JSON codec rejects ops whose `value` contains
+ * explicit `undefined` members (e.g. `{ mode: 'follow-main', selection:
+ * undefined }` produced by the settings UI), failing with
+ * `client api:settings/mutate rejected "ops"`. A JSON round-trip drops them.
+ */
+function toJsonValue<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
 function view(snap: SettingsScopeSnapshot<Config>): ConfigStoreSnapshot {
   if (snap.status === 'unavailable') {
     return { status: 'error', value: snap.value ?? EMPTY, error: 'unavailable' }
@@ -50,7 +62,7 @@ export class ConfigStore {
    * fences the write with the latest known namespace revision.
    */
   async saveRoute(field: 'subagent' | 'planExecute', next: RouteSwitchConfig): Promise<void> {
-    await this.scope.set(field, next)
+    await this.scope.set(field, toJsonValue(next))
     const snap = this.getSnapshot()
     if (snap.status === 'error') {
       throw new Error(snap.error ?? 'unavailable')
