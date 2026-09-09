@@ -61,7 +61,7 @@ dsh --version
 npm view @deepseek-ai/dsh dist-tags
 ```
 
-As of 2026-09-03, `latest` points to `0.1.1-rc.2`, `next` points to `0.1.2-rc.1` (this plugin's current target), and the `alpha` tag points to `0.1.2-alpha.5`. Pin the exact version (`@0.1.2-rc.1`) when reproducibility matters.
+As of 2026-09-09, `latest` points to `0.1.2-rc.1` (this plugin's current target), `next` also points to `0.1.2-rc.1`, and the `alpha` tag points to `0.1.5-alpha.2`. Pin the exact version (`@0.1.2-rc.1`) when reproducibility matters.
 
 2. **npx (Web):**
 

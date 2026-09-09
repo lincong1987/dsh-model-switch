@@ -94,6 +94,32 @@ describe('ConfigStore', () => {
     expect(store.getSnapshot().value.planExecute).toEqual({ mode: 'follow-main' })
   })
 
+  it('drops explicit undefined members before writing (settings/mutate ops codec)', async () => {
+    const seen: Array<unknown> = []
+    const scope = mockScope(loading)
+    const originalSet = scope.set.bind(scope)
+    scope.set = async (field, value) => {
+      seen.push(value)
+      await originalSet(field, value)
+    }
+    const store = new ConfigStore(scope)
+    // The settings UI sends `{ mode, selection: route.selection }`; with no
+    // selection picked this carries an explicit `selection: undefined` member,
+    // which the strict settings/mutate JSON codec rejects.
+    await store.saveRoute('subagent', {
+      mode: 'follow-main',
+      selection: undefined,
+    })
+    expect(seen[0]).toEqual({ mode: 'follow-main' })
+    expect(Object.hasOwn(seen[0] as object, 'selection')).toBe(false)
+    // Defined selections must survive the round-trip untouched.
+    await store.saveRoute('planExecute', {
+      mode: 'custom',
+      selection: { provider: 'p', model: 'm' },
+    })
+    expect(seen[1]).toEqual({ mode: 'custom', selection: { provider: 'p', model: 'm' } })
+  })
+
   it('notifies subscribers when the scope snapshot changes', () => {
     const scope = mockScope(loading)
     const store = new ConfigStore(scope)
