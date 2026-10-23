@@ -23,6 +23,37 @@ export interface Config {
   planExecute?: RouteSwitchConfig
 }
 
+/** Schemastery volatile fields expose their live value through get(). */
+export interface VolatileConfigValue<T> {
+  get(): T
+}
+
+/** Host Config shape: persisted values may be wrapped in DSH live references. */
+export interface RuntimeConfig {
+  subagent?: RouteSwitchConfig | VolatileConfigValue<RouteSwitchConfig>
+  planExecute?: RouteSwitchConfig | VolatileConfigValue<RouteSwitchConfig>
+}
+
+function unwrapConfigValue<T>(value: T | VolatileConfigValue<T> | undefined): T | undefined {
+  if (
+    typeof value === 'object'
+    && value !== null
+    && 'get' in value
+    && typeof value.get === 'function'
+  ) {
+    return value.get()
+  }
+  return value as T | undefined
+}
+
+/** Read plain values from the Host plugin Config, unwrapping live DSH references. */
+export function resolveRuntimeConfig(config: RuntimeConfig | undefined): Config {
+  return {
+    subagent: unwrapConfigValue(config?.subagent),
+    planExecute: unwrapConfigValue(config?.planExecute),
+  }
+}
+
 /** Settings namespace string (must match host registration). */
 export const MODEL_SWITCH_NS = 'model-switch'
 

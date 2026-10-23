@@ -113,7 +113,7 @@ export function installSessionLabelTracking(
   currentEffort: () => string | undefined,
 ): void {
   ctx.on('agent/created', ({ agent }) => {
-    if (agent.session.header.origin !== 'subagent') return
+    if (agent.session.header.origin !== 'subagent') return undefined
     const sessionId = String(agent.session.header.id)
     void resolveAgentLabel(ctx, agent, currentEffort()).then((label) => {
       if (label !== undefined) registry.set(sessionId, label)
@@ -137,6 +137,7 @@ export function installSessionLabelTracking(
       })()
       return seed
     })
+    return undefined
   })
 }
 

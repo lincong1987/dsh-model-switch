@@ -1,139 +1,155 @@
 import { describe, expect, it } from 'vitest'
-import type { SettingsScope, SettingsScopeSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
-import { ConfigStore } from '../src/client/config-store.ts'
-import type { Config } from '../src/shared.ts'
+import { ConfigStore, type ConfigSettingsRemote } from '../src/client/config-store.ts'
+import type { Config, RouteSwitchConfig } from '../src/shared.ts'
 
-function mockScope(initial: SettingsScopeSnapshot<Config>): SettingsScope<Config> & {
-  publish(next: SettingsScopeSnapshot<Config>): void
-} {
-  let snap = initial
-  const listeners = new Set<() => void>()
-  return {
-    getSnapshot: () => snap,
-    subscribe(listener) {
-      listeners.add(listener)
-      return () => { listeners.delete(listener) }
-    },
-    async set(field, value) {
-      snap = {
-        ...snap,
-        status: 'ready',
-        value: { ...snap.value, [field]: value },
-        user: { ...(snap.user as object | undefined), [field]: value },
-        revision: (snap.revision ?? 0) + 1,
-        writable: true,
-      }
-      for (const listener of listeners) listener()
-    },
-    async unset(field) {
-      const nextValue = { ...snap.value }
-      delete nextValue[field as keyof Config]
-      snap = {
-        ...snap,
-        status: 'ready',
-        value: nextValue,
-        revision: (snap.revision ?? 0) + 1,
-        writable: true,
-      }
-      for (const listener of listeners) listener()
-    },
-    publish(next) {
-      snap = next
-      for (const listener of listeners) listener()
-    },
-  }
+type NamespaceView = { ns: string; value: Config; revision: number }
+type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue }
+
+interface MockSettingsRemote extends ConfigSettingsRemote {
+  calls: Array<{ method: 'describe' | 'update'; args: unknown[] }>
+  setWritable(value: boolean): void
+  setNamespace(value: string | undefined): void
+  setDescribeFailure(message: string | undefined): void
+  publish(value: Config): void
 }
 
-const loading: SettingsScopeSnapshot<Config> = {
-  status: 'loading',
-  value: undefined,
-  base: undefined,
-  user: undefined,
-  revision: undefined,
-  writable: false,
-  mode: 'host',
+function mockRemote(initial: Config = {}): MockSettingsRemote {
+  let value = initial
+  let revision = 1
+  let writable = true
+  let namespace: string | undefined = 'model-switch'
+  let describeFailure: string | undefined
+  const calls: MockSettingsRemote['calls'] = []
+  return {
+    calls,
+    setWritable(next) { writable = next },
+    setNamespace(next) { namespace = next },
+    setDescribeFailure(next) { describeFailure = next },
+    publish(next) { value = next; revision += 1 },
+    settings: {
+      async describe() {
+        calls.push({ method: 'describe', args: [] })
+        if (describeFailure !== undefined) throw new Error(describeFailure)
+        return {
+          ok: true as const,
+          value: {
+            writable,
+            hasDocument: true,
+            namespaces: namespace === undefined ? [] : [{ ns: namespace, value, revision }],
+          },
+        }
+      },
+      async update(ns: string, patch: Record<string, JsonValue>, expectedRevision: number | undefined) {
+        calls.push({ method: 'update', args: [ns, patch, expectedRevision] })
+        if (expectedRevision !== revision) {
+          return { ok: false as const, error: { code: 'settings/conflict', message: 'stale revision' } }
+        }
+        value = { ...value, ...patch } as Config
+        revision += 1
+        return {
+          ok: true as const,
+          value: { ns, value, revision, autoGenerate: false, schema: {}, applies: 'live' as const, secrets: [] },
+        }
+      },
+    },
+  } as unknown as MockSettingsRemote
+}
+
+const customRoute: RouteSwitchConfig = {
+  mode: 'custom',
+  selection: { provider: 'provider-a', model: 'model-a' },
 }
 
 describe('ConfigStore', () => {
-  it('maps loading with no value to loading', () => {
-    const store = new ConfigStore(mockScope(loading))
-    expect(store.getSnapshot()).toEqual({ status: 'loading', value: {}, error: null })
+  it('loads the plugin entry by namespace and retains its writable revision', async () => {
+    const remote = mockRemote({ subagent: { mode: 'follow-main' } })
+    const store = new ConfigStore(remote)
+    await store.refresh()
+    expect(remote.calls).toEqual([{ method: 'describe', args: [] }])
+    expect(store.getSnapshot()).toEqual({
+      status: 'ready',
+      value: { subagent: { mode: 'follow-main' } },
+      error: null,
+      writable: true,
+    })
   })
 
-  it('reuses the mapped snapshot while the raw snapshot is unchanged', () => {
-    const store = new ConfigStore(mockScope(loading))
-    expect(store.getSnapshot()).toBe(store.getSnapshot())
+  it('writes a single route field with the namespace and current revision', async () => {
+    const remote = mockRemote({ planExecute: { mode: 'follow-main' } })
+    const store = new ConfigStore(remote)
+    await store.refresh()
+    await store.saveRoute('subagent', customRoute)
+
+    expect(remote.calls[1]).toEqual({
+      method: 'update',
+      args: ['model-switch', { subagent: customRoute }, 1],
+    })
+    expect(store.getSnapshot().value).toEqual({
+      planExecute: { mode: 'follow-main' },
+      subagent: customRoute,
+    })
   })
 
-  it('maps unavailable to error', () => {
-    const store = new ConfigStore(mockScope({ ...loading, status: 'unavailable' }))
+  it('removes explicit undefined values before the strict JSON Remote codec', async () => {
+    const remote = mockRemote()
+    const store = new ConfigStore(remote)
+    await store.refresh()
+    await store.saveRoute('subagent', { mode: 'follow-main', selection: undefined })
+    expect(remote.calls[1]).toEqual({
+      method: 'update',
+      args: ['model-switch', { subagent: { mode: 'follow-main' } }, 1],
+    })
+  })
+
+  it('rejects writes while host settings are read-only', async () => {
+    const remote = mockRemote()
+    remote.setWritable(false)
+    const store = new ConfigStore(remote)
+    await store.refresh()
+    await expect(store.saveRoute('subagent', customRoute)).rejects.toThrow('host settings are read-only')
+    expect(remote.calls).toEqual([{ method: 'describe', args: [] }])
+  })
+
+  it('clears writable state when a refreshed describe request rejects', async () => {
+    const remote = mockRemote({ subagent: { mode: 'follow-main' } })
+    const store = new ConfigStore(remote)
+    await store.refresh()
+    expect(store.getSnapshot().writable).toBe(true)
+
+    remote.setDescribeFailure('connection reset')
+    await store.refresh()
+    expect(store.getSnapshot()).toEqual({
+      status: 'error',
+      value: { subagent: { mode: 'follow-main' } },
+      error: 'connection reset',
+      writable: false,
+    })
+    await expect(store.saveRoute('subagent', customRoute)).rejects.toThrow('connection reset')
+  })
+
+  it('maps a missing plugin Config namespace to an explicit error', async () => {
+    const remote = mockRemote()
+    remote.setNamespace(undefined)
+    const store = new ConfigStore(remote)
+    await store.refresh()
     expect(store.getSnapshot()).toEqual({
       status: 'error',
       value: {},
-      error: 'unavailable',
+      error: 'settings namespace not found: model-switch',
+      writable: false,
     })
   })
 
-  it('writes one route field through the scope', async () => {
-    const scope = mockScope({
-      ...loading,
-      status: 'ready',
-      value: { subagent: { mode: 'follow-main' }, planExecute: { mode: 'follow-main' } },
-      revision: 1,
-      writable: true,
-    })
-    const store = new ConfigStore(scope)
-    await store.saveRoute('subagent', {
-      mode: 'custom',
-      selection: { provider: 'p', model: 'm' },
-    })
-    expect(store.getSnapshot().value.subagent).toEqual({
-      mode: 'custom',
-      selection: { provider: 'p', model: 'm' },
-    })
-    expect(store.getSnapshot().value.planExecute).toEqual({ mode: 'follow-main' })
-  })
-
-  it('drops explicit undefined members before writing (settings/mutate ops codec)', async () => {
-    const seen: Array<unknown> = []
-    const scope = mockScope(loading)
-    const originalSet = scope.set.bind(scope)
-    scope.set = async (field, value) => {
-      seen.push(value)
-      await originalSet(field, value)
-    }
-    const store = new ConfigStore(scope)
-    // The settings UI sends `{ mode, selection: route.selection }`; with no
-    // selection picked this carries an explicit `selection: undefined` member,
-    // which the strict settings/mutate JSON codec rejects.
-    await store.saveRoute('subagent', {
-      mode: 'follow-main',
-      selection: undefined,
-    })
-    expect(seen[0]).toEqual({ mode: 'follow-main' })
-    expect(Object.hasOwn(seen[0] as object, 'selection')).toBe(false)
-    // Defined selections must survive the round-trip untouched.
-    await store.saveRoute('planExecute', {
-      mode: 'custom',
-      selection: { provider: 'p', model: 'm' },
-    })
-    expect(seen[1]).toEqual({ mode: 'custom', selection: { provider: 'p', model: 'm' } })
-  })
-
-  it('notifies subscribers when the scope snapshot changes', () => {
-    const scope = mockScope(loading)
-    const store = new ConfigStore(scope)
+  it('notifies subscribers when a refreshed namespace changes', async () => {
+    const remote = mockRemote({ subagent: { mode: 'follow-main' } })
+    const store = new ConfigStore(remote)
+    await store.refresh()
     let ticks = 0
     const stop = store.subscribe(() => { ticks += 1 })
-    scope.publish({
-      ...loading,
-      status: 'ready',
-      value: { subagent: { mode: 'follow-main' } },
-      revision: 1,
-      writable: true,
-    })
+    remote.publish({ subagent: customRoute })
+    await store.refresh()
     expect(ticks).toBe(1)
-    expect(store.getSnapshot().status).toBe('ready')
+    expect(store.getSnapshot().value.subagent).toEqual(customRoute)
     stop()
   })
 })

@@ -19,6 +19,17 @@ export interface Config {
     /** Default model for plan-mode execution after Approve. */
     planExecute?: RouteSwitchConfig;
 }
+/** Schemastery volatile fields expose their live value through get(). */
+export interface VolatileConfigValue<T> {
+    get(): T;
+}
+/** Host Config shape: persisted values may be wrapped in DSH live references. */
+export interface RuntimeConfig {
+    subagent?: RouteSwitchConfig | VolatileConfigValue<RouteSwitchConfig>;
+    planExecute?: RouteSwitchConfig | VolatileConfigValue<RouteSwitchConfig>;
+}
+/** Read plain values from the Host plugin Config, unwrapping live DSH references. */
+export declare function resolveRuntimeConfig(config: RuntimeConfig | undefined): Config;
 /** Settings namespace string (must match host registration). */
 export declare const MODEL_SWITCH_NS = "model-switch";
 /** Resolve a route to an explicit selection, or undefined when following main. */

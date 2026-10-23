@@ -30,7 +30,7 @@
   margin: 0;
   font-size: 14px;
   line-height: 22px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 .block {
@@ -38,7 +38,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 0 0;
-  border-top: 1px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid var(--dsw-alias-border-l2);
 }
 
 .blockTitle {
@@ -53,7 +53,7 @@
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
 }
 
 .modes {
@@ -62,7 +62,7 @@
   gap: 4px;
   padding: 3px;
   border-radius: 18px;
-  background: var(--dsw-alias-interactive-bg-hover, rgba(0, 0, 0, 0.04));
+  background: var(--dsw-alias-bg-layer-2);
 }
 
 .mode {
@@ -85,7 +85,7 @@
 }
 
 .mode:focus-visible {
-  box-shadow: 0 0 0 2px var(--dsw-alias-border-l3);
+  box-shadow: 0 0 0 2px var(--dsw-alias-border-l2);
 }
 
 .mode:disabled {
@@ -94,9 +94,9 @@
 }
 
 .modeActive {
-  background: var(--dsw-specific-menu, #fff);
+  background: var(--dsw-alias-bg-overlay);
   color: var(--dsw-alias-label-primary);
-  box-shadow: 0 0 0 1px var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 0 0 1px var(--dsw-alias-border-l2);
 }
 
 .pickerWrap {
@@ -107,7 +107,7 @@
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--dsw-alias-state-error-primary, #c0392b);
+  color: var(--dsw-alias-state-error-primary);
 }
 
 .frame {
@@ -115,10 +115,10 @@
 }
 
 .card {
-  border: 1px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
   overflow: hidden;
-  background: var(--dsw-specific-menu, #fff);
+  background: var(--dsw-alias-bg-overlay);
 }
 
 .strip {
@@ -129,20 +129,152 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--dsw-alias-label-primary);
-  background: color-mix(in srgb, var(--dsw-alias-state-info-primary, #3b82f6) 12%, transparent);
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 12%, transparent);
 }
 
 .dot {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--dsw-alias-state-info-primary, #3b82f6);
+  background: var(--dsw-alias-brand-primary);
 }
 
 .body {
   max-height: min(42vh, 28rem);
   overflow: auto;
   padding: 0.85rem 1rem;
+}
+
+.planText {
+  color: var(--dsw-alias-label-primary);
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.planText p {
+  margin: 0.45em 0;
+  white-space: pre-wrap;
+}
+
+.planText h1,
+.planText h2,
+.planText h3,
+.planText h4,
+.planText h5,
+.planText h6 {
+  margin: 0.8em 0 0.35em;
+  color: var(--dsw-alias-label-primary);
+  line-height: 1.35;
+}
+
+.planText h1 { font-size: 1.35em; }
+.planText h2 { font-size: 1.25em; }
+.planText h3 { font-size: 1.15em; }
+.planText h4,
+.planText h5,
+.planText h6 { font-size: 1.05em; }
+
+.planText ul,
+.planText ol {
+  margin: 0.45em 0;
+  padding-left: 1.5em;
+}
+
+.planText .taskItem {
+  list-style: none;
+  margin-left: -1.5em;
+}
+
+.planText .taskCheck {
+  display: inline-block;
+  width: 0.82em;
+  height: 0.82em;
+  margin-right: 0.45em;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 3px;
+  vertical-align: -0.08em;
+}
+
+.planText .taskCheck[aria-checked='true'] {
+  border-color: var(--dsw-alias-brand-primary);
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-bg-base);
+}
+
+.planText .taskCheck[aria-checked='true']::after {
+  content: '✓';
+  display: block;
+  margin-top: -0.18em;
+  text-align: center;
+  font-size: 0.78em;
+  line-height: 1.1;
+}
+
+.planText del {
+  color: var(--dsw-alias-label-secondary);
+}
+
+.tableWrap {
+  max-width: 100%;
+  margin: 0.55em 0;
+  overflow-x: auto;
+}
+
+.planText table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.planText th,
+.planText td {
+  padding: 0.35em 0.55em;
+  border: 1px solid var(--dsw-alias-border-l2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.planText th {
+  background: var(--dsw-alias-bg-layer-2);
+  font-weight: 600;
+}
+
+.planText blockquote {
+  margin: 0.55em 0;
+  padding-left: 0.8em;
+  border-left: 2px solid var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-secondary);
+  white-space: pre-wrap;
+}
+
+.planText pre {
+  margin: 0.55em 0;
+  padding: 0.7em 0.85em;
+  overflow: auto;
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-layer-2);
+  white-space: pre;
+}
+
+.planText code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.planText :not(pre) > code {
+  padding: 0.08em 0.28em;
+  border-radius: 4px;
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.planText a {
+  color: var(--dsw-alias-brand-primary);
+  text-decoration: underline;
+}
+
+.planText hr {
+  margin: 0.8em 0;
+  border: 0;
+  border-top: 1px solid var(--dsw-alias-border-l2);
 }
 
 .footer {
@@ -152,13 +284,13 @@
   justify-content: space-between;
   gap: 0.65rem;
   padding: 0.7rem 0.9rem;
-  border-top: 1px solid var(--dsw-alias-border-l2, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid var(--dsw-alias-border-l2);
 }
 
 .feedback {
   min-height: 1.1rem;
   font-size: 0.75rem;
-  color: var(--dsw-alias-state-error-primary, #c0392b);
+  color: var(--dsw-alias-state-error-primary);
 }
 
 .actions {
@@ -168,6 +300,52 @@
   justify-content: flex-end;
   gap: 0.5rem;
   margin-left: auto;
+}
+
+.planButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.planButton:hover:not(:disabled) {
+  background: var(--dsw-alias-bg-layer-2);
+}
+
+.planButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 2px;
+}
+
+.planButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.planButtonGhost {
+  background: transparent;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.planButtonOutline {
+  border-color: var(--dsw-alias-border-l2);
+  background: var(--dsw-alias-bg-layer-1);
+  color: var(--dsw-alias-label-primary);
+}
+
+.planButtonPrimary {
+  border-color: var(--dsw-alias-brand-primary);
+  background: color-mix(in srgb, var(--dsw-alias-brand-primary) 12%, var(--dsw-alias-bg-layer-1));
+  color: var(--dsw-alias-brand-primary);
 }
 
 .planPicker {

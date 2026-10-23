@@ -6,8 +6,6 @@ import { type LocaleKey } from './locales.ts';
 declare module '@deepseek-ai/dsh-client-ui-slots' {
     interface LocaleNamespaceMap {
         'model-switch': LocaleKey;
-        /** Reuse stock ui-subagent dictionaries when replacing the catalog seat. */
-        'subagent': string;
     }
 }
 export declare const inject: string[];

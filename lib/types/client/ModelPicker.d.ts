@@ -23,4 +23,6 @@ export interface ModelPickerProps {
     /** Menu opens above (composer/plan) or below (settings). */
     placement?: 'top' | 'bottom';
 }
+/** Filter catalog groups by provider/model identity and model description. */
+export declare function filterModelGroups(groups: ModelCatalog['groups'], query: string): ModelCatalog['groups'];
 export declare function ModelPicker({ sessionId, access, value, onChange, t, disabled, className, placement, }: ModelPickerProps): import("react").JSX.Element;

@@ -10,6 +10,8 @@ export declare const zh: {
     modeFollow: string;
     modeCustom: string;
     modelLabel: string;
+    searchModels: string;
+    noSearchResults: string;
     effortLabel: string;
     effortDefault: string;
     triggerFallback: string;
@@ -19,10 +21,10 @@ export declare const zh: {
     emptyModels: string;
     emptyEfforts: string;
     retry: string;
-    noSession: string;
     loadError: string;
     saveError: string;
     unavailable: string;
+    restoreError: string;
     planHeader: string;
     planDiscuss: string;
     planDecline: string;
@@ -43,6 +45,8 @@ export declare const en: {
     modeFollow: string;
     modeCustom: string;
     modelLabel: string;
+    searchModels: string;
+    noSearchResults: string;
     effortLabel: string;
     effortDefault: string;
     triggerFallback: string;
@@ -52,10 +56,10 @@ export declare const en: {
     emptyModels: string;
     emptyEfforts: string;
     retry: string;
-    noSession: string;
     loadError: string;
     saveError: string;
     unavailable: string;
+    restoreError: string;
     planHeader: string;
     planDiscuss: string;
     planDecline: string;

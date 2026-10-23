@@ -1,27 +1,61 @@
 /**
- * Browser mirror of the host `model-switch` settings namespace.
+ * Client mirror of the Host plugin Config namespace.
  *
- * DSH 0.1.2-alpha.4+ serves plugin-registered namespaces through settings.*;
- * this store is a stable snapshot wrapper over `ctx.settingsScope`.
+ * DSH 0.2 exposes plugin Config values through the settings Remote. The
+ * namespace is the Loader entry id (`model-switch` from cordis.patch.yml).
  */
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client';
-import type { Config, RouteSwitchConfig } from '../shared.ts';
+import { type Config, type RouteSwitchConfig } from '../shared.ts';
 export interface ConfigStoreSnapshot {
     status: 'loading' | 'ready' | 'error';
     value: Config;
     error: string | null;
+    writable: boolean;
 }
-/** Reactive config store over the client settings-namespace scope. */
+type JsonValue = null | boolean | number | string | JsonValue[] | {
+    [key: string]: JsonValue;
+};
+type RemoteResult<T> = {
+    ok: true;
+    value: T;
+} | {
+    ok: false;
+    error: {
+        code: string;
+        message: string;
+    };
+};
+type SettingsNamespaceView = {
+    ns: string;
+    value: JsonValue;
+    revision: number;
+};
+type SettingsDescribeValue = {
+    writable: boolean;
+    namespaces: SettingsNamespaceView[];
+};
+/** Narrow face verified from DSH 0.2 settingsController's Remote contract. */
+export interface ConfigSettingsRemote {
+    settings: {
+        describe(): Promise<RemoteResult<SettingsDescribeValue>>;
+        update(ns: string, patch: Record<string, JsonValue>, expectedRevision: number | undefined): Promise<RemoteResult<SettingsNamespaceView>>;
+    };
+}
+/** Reactive, revision-fenced view of this plugin's Host Config entry. */
 export declare class ConfigStore {
-    private readonly scope;
-    private lastRaw;
-    private lastView;
-    constructor(scope: SettingsScope<Config>);
-    getSnapshot(): ConfigStoreSnapshot;
-    subscribe(listener: () => void): () => void;
-    /**
-     * Persist one route field. `settingsScope.set` is one field per call and
-     * fences the write with the latest known namespace revision.
-     */
+    private readonly remote;
+    private readonly namespace;
+    private snap;
+    private revision;
+    private readGeneration;
+    private writeTail;
+    private readonly listeners;
+    constructor(remote: ConfigSettingsRemote, namespace?: string);
+    getSnapshot: () => ConfigStoreSnapshot;
+    subscribe: (listener: () => void) => (() => void);
+    refresh(): Promise<void>;
+    /** Persist one route against the most recently observed revision. */
     saveRoute(field: 'subagent' | 'planExecute', next: RouteSwitchConfig): Promise<void>;
+    private persistRoute;
+    private publish;
 }
+export type { Config };

@@ -141,7 +141,7 @@ export function SettingsSection(props: SettingsSectionProps) {
         sessionId={sessionId}
         access={access}
         t={t}
-        busy={busy || snap.status === 'loading'}
+        busy={busy || snap.status === 'loading' || !snap.writable}
         onChange={(next) => { writeRoute('subagent', next) }}
       />
       <RouteBlock
@@ -151,7 +151,7 @@ export function SettingsSection(props: SettingsSectionProps) {
         sessionId={sessionId}
         access={access}
         t={t}
-        busy={busy || snap.status === 'loading'}
+        busy={busy || snap.status === 'loading' || !snap.writable}
         onChange={(next) => { writeRoute('planExecute', next) }}
       />
     </div>

@@ -3,7 +3,7 @@
  */
 
 import z from '@deepseek-ai/schemastery'
-import type { Config, ModelSelectionConfig, RouteSwitchConfig } from './shared.ts'
+import type { ModelSelectionConfig, RouteSwitchConfig } from './shared.ts'
 
 export type { Config, ModelSelectionConfig, RouteSwitchConfig } from './shared.ts'
 export {
@@ -12,7 +12,7 @@ export {
   resolvePlanExecuteSelection,
 } from './shared.ts'
 
-/** Persisted settings namespace (kebab-case literal validated by dsh-settings). */
+/** Settings Remote namespace: the plugin's Loader entry id. */
 export const MODEL_SWITCH_SETTINGS_NAMESPACE = 'model-switch'
 
 const SelectionSchema: z<ModelSelectionConfig> = z.object({
@@ -27,7 +27,7 @@ const RouteSchema: z<RouteSwitchConfig> = z.object({
 })
 
 /** Schemastery schema for the settings section / composition entry. */
-export const ConfigSchema: z<Config> = z.object({
-  subagent: RouteSchema.default({ mode: 'follow-main' }),
-  planExecute: RouteSchema.default({ mode: 'follow-main' }),
+export const ConfigSchema = z.object({
+  subagent: RouteSchema.default({ mode: 'follow-main' }).volatile(),
+  planExecute: RouteSchema.default({ mode: 'follow-main' }).volatile(),
 })

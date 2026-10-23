@@ -12,7 +12,7 @@ import {
   IconCheckOutline16,
   IconChevronDownOutline14,
   IconChevronRightOutline14,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from './UiGlyphs.tsx'
 import type { ModelSelectionConfig } from '../shared.ts'
 import type { LocaleKey } from './locales.ts'
 import css from './ModelPicker.module.css'
@@ -46,6 +46,25 @@ interface EffortChoice {
   description?: string
 }
 
+/** Filter catalog groups by provider/model identity and model description. */
+export function filterModelGroups(
+  groups: ModelCatalog['groups'],
+  query: string,
+): ModelCatalog['groups'] {
+  const term = query.trim().toLowerCase()
+  if (term.length === 0) return groups
+
+  return groups.flatMap((group) => {
+    const providerMatches = `${group.name} ${group.id}`.toLowerCase().includes(term)
+    const models = providerMatches
+      ? group.models
+      : group.models.filter((model) => (
+        `${model.name} ${model.id} ${model.description ?? ''}`.toLowerCase().includes(term)
+      ))
+    return models.length === 0 ? [] : [{ ...group, models }]
+  })
+}
+
 export function ModelPicker({
   sessionId, access, value, onChange, t, disabled, className,
   placement = 'bottom',
@@ -55,6 +74,7 @@ export function ModelPicker({
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
   const [pane, setPane] = useState<Pane>('root')
+  const [searchQuery, setSearchQuery] = useState('')
   const rootRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -76,16 +96,13 @@ export function ModelPicker({
   }
 
   const load = (): void => {
-    if (sessionId === undefined) {
-      setCatalog(null)
-      setError(null)
-      return
-    }
     setLoading(true)
     setError(null)
     void access.loadCatalog().then((next) => {
       setCatalog(next)
-      seedFromCurrent(access.currentSelection(sessionId) ?? next.default)
+      setLoading(false)
+      const current = sessionId === undefined ? undefined : access.currentSelection(sessionId)
+      seedFromCurrent(current ?? next.default)
     }).catch((cause: unknown) => {
       setLoading(false)
       setError(cause instanceof Error ? cause.message : String(cause))
@@ -94,18 +111,14 @@ export function ModelPicker({
 
   useEffect(() => {
     let cancelled = false
-    if (sessionId === undefined) {
-      setCatalog(null)
-      setError(null)
-      return
-    }
     setLoading(true)
     setError(null)
     void access.loadCatalog().then((next) => {
       if (cancelled) return
       setLoading(false)
       setCatalog(next)
-      seedFromCurrent(access.currentSelection(sessionId) ?? next.default)
+      const current = sessionId === undefined ? undefined : access.currentSelection(sessionId)
+      seedFromCurrent(current ?? next.default)
     }).catch((cause: unknown) => {
       if (cancelled) return
       setLoading(false)
@@ -139,6 +152,11 @@ export function ModelPicker({
   }, [catalog])
 
   const groups = catalog?.groups ?? []
+  const filteredGroups = useMemo(
+    () => filterModelGroups(groups, searchQuery),
+    [groups, searchQuery],
+  )
+  const filteredModelCount = filteredGroups.reduce((count, group) => count + group.models.length, 0)
   const selected = choices.find(c => c.provider === value?.provider && c.model === value?.model)
   const reasoning = selected?.reasoning
   const effectiveEffort = value?.reasoningEffort ?? reasoning?.defaultEffort
@@ -191,6 +209,7 @@ export function ModelPicker({
       return
     }
     if (!open) return
+    if (event.target instanceof HTMLInputElement) return
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault()
       moveFocus(event.key === 'ArrowDown' ? 1 : -1)
@@ -223,10 +242,6 @@ export function ModelPicker({
     close(true)
   }
 
-  if (sessionId === undefined) {
-    return <p className={css.muted}>{t('noSession')}</p>
-  }
-
   const modelLabel = selected?.modelName ?? t('triggerFallback')
   const triggerAria = selected === undefined
     ? t('triggerSelectAria')
@@ -257,7 +272,7 @@ export function ModelPicker({
         type="button"
         className={css.trigger}
         aria-label={triggerAria}
-        aria-haspopup="menu"
+        aria-haspopup={pane === 'model' ? 'dialog' : 'menu'}
         aria-expanded={open}
         aria-controls={open ? `${id}-menu` : undefined}
         title={triggerAria}
@@ -276,13 +291,13 @@ export function ModelPicker({
         <div
           id={`${id}-menu`}
           className={menuClass}
-          role="menu"
-          aria-label={t('menuAria')}
+          role={pane === 'model' ? 'dialog' : 'menu'}
+          aria-label={pane === 'model' ? t('modelLabel') : t('menuAria')}
           aria-busy={loading}
         >
           {pane === 'root' && (
             <>
-              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setPane('model') }}>
+              <button ref={itemRef()} type="button" role="menuitem" className={css.cell} onClick={() => { setSearchQuery(''); setPane('model') }}>
                 <span className={css.cellLabel}>{t('modelLabel')}</span>
                 <span className={css.cellValue}>{modelLabel}</span>
                 <IconChevronRightOutline14 className={css.cellChevron} />
@@ -299,6 +314,16 @@ export function ModelPicker({
 
           {pane === 'model' && (
             <>
+              <input
+                autoFocus
+                className={css.searchInput}
+                type="search"
+                disabled={disabled}
+                aria-label={t('searchModels')}
+                placeholder={t('searchModels')}
+                value={searchQuery}
+                onChange={(event) => { setSearchQuery(event.currentTarget.value) }}
+              />
               {loading && <div className={css.status}>{t('statusLoading')}</div>}
               {error !== null && (
                 <div className={css.error}>
@@ -306,8 +331,8 @@ export function ModelPicker({
                   <button type="button" className={css.retry} onClick={load}>{t('retry')}</button>
                 </div>
               )}
-              <div className={`${css.groups} scrollable`}>
-                {groups.map((group) => {
+              <div className={`${css.groups} scrollable`} role="menu" aria-label={t('modelLabel')}>
+                {filteredGroups.map((group) => {
                   const headingId = `${id}-${group.id}`
                   return (
                     <section role="group" aria-labelledby={headingId} className={css.group} key={group.id}>
@@ -342,8 +367,10 @@ export function ModelPicker({
                   )
                 })}
               </div>
-              {!loading && error === null && choices.length === 0 && (
-                <div className={css.empty}>{t('emptyModels')}</div>
+              {!loading && error === null && filteredModelCount === 0 && (
+                <div className={css.empty} role="status" aria-live="polite">
+                  {searchQuery.trim().length > 0 ? t('noSearchResults') : t('emptyModels')}
+                </div>
               )}
             </>
           )}

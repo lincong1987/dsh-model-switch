@@ -29,21 +29,18 @@ The main conversation, subagents, and plan execution serve different purposes. `
   </tr>
 </table>
 
-### See the model used by subagents
+### See the model used by a subagent
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/subagent.png" alt="Subagent model overview" /></td>
-    <td width="50%"><img src="docs/subagent-detail.png" alt="Subagent model details" /></td>
-  </tr>
-</table>
+Open a subagent session to see its model, context window, and reasoning effort in the session header.
+
+<img src="docs/subagent-detail.png" alt="Subagent model details in the session header" width="720" />
 
 ## Install
 
-Use the GitHub spec. This plugin is not published as an npm package, so do not use `@lincong1987/dsh-model-switch`.
+Use the GitHub spec for this fork. It is not published as an npm package.
 
 ```bash
-dsh plugin --profile web add github:lincong1987/dsh-model-switch
+dsh plugin --profile web add github:SA2687890878/dsh-model-switch
 ```
 
 Replace `web` with the profile DSH is actually running. DeepSeek Harness Desktop typically uses `desktop`.
@@ -52,47 +49,21 @@ Restart DSH after installation.
 
 ## Update DSH
 
-This plugin requires DeepSeek Harness **0.1.5-rc.1** or later. DSH has no `dsh update` command — install the version you want the same way you originally installed it.
+This fork has been typechecked and built against DeepSeek Harness **0.2.0-rc.2**. The manifest declares the compatible peer range `^0.2.0-rc.2`; later releases are not runtime-tested by this change.
 
-1. Check the installed version and what npm currently publishes:
+If you upgrade DSH, use the normal channel for that installation. Desktop updates its bundled DSH through the app updater; updating npm or `npx` does not replace Desktop's copy. Follow DSH release notes and back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before crossing a release that changes on-disk formats.
 
-```bash
-dsh --version
-npm view @deepseek-ai/dsh dist-tags
-```
-
-As of 2026-09-10, `latest` points to `0.1.5-rc.1` (this plugin's current target), `next` points to `0.1.5-rc.2`, and the `alpha` tag points to `0.1.5-alpha.2`. Pin the exact version (`@0.1.5-rc.1`) when reproducibility matters.
-
-2. **npx (Web):**
-
-```bash
-npx --yes @deepseek-ai/dsh@0.1.5-rc.1 web
-```
-
-3. **Global npm install:**
-
-```bash
-npm install -g @deepseek-ai/dsh@0.1.5-rc.1
-dsh --version
-```
-
-Then restart `dsh web`. DSH needs Node.js `^22.19.0` or `>=24`.
-
-4. **Desktop:** Fully **Exit** from the tray, then use **Check for Updates** in the app (or install a newer Desktop build). Desktop ships its own packaged `dsh`; updating npm or `npx` does not replace that copy. After Desktop finishes updating, restart it.
-
-DSH is still a developer preview and may change on-disk formats between releases. Back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before jumping versions. In particular, 0.1.0-rc.8 changed the SQLite storage format incompatibly, and 0.1.2-alpha.3 removed the optional SQLite session backend entirely (existing data is kept but needs an older version to export); treat local sessions as non-portable when crossing those boundaries. 0.1.2-alpha.5 fixed upgrading from 0.1.1-rc.2 or 0.1.2-alpha.3 (the app now starts and session list titles are kept); 0.1.5-rc.1 is the current release-candidate line that this plugin targets.
-
-After DSH is on a compatible version, reinstall this plugin as described below.
+After a DSH upgrade, reinstall this fork with `--force` as described below.
 
 ## Reinstall / after a DSH update
 
-Reinstall the plugin when this repository has a new release, or after you upgrade DeepSeek Harness. The plugin tracks a specific DSH version (currently **0.1.5-rc.1** or later), so a host upgrade should be followed by a plugin reinstall.
+Reinstall the plugin when this fork changes, or after you upgrade DeepSeek Harness. This change was verified against **0.2.0-rc.2**; the package peer range is `^0.2.0-rc.2`.
 
 1. Update DSH first (see [Update DSH](#update-dsh); skip this step if only the plugin changed).
 2. Reinstall with `--force` so DSH refreshes the GitHub source:
 
 ```bash
-dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
+dsh plugin --profile web add --force github:SA2687890878/dsh-model-switch
 ```
 
 3. Restart DSH.
@@ -102,7 +73,7 @@ On Desktop, run **one** `plugin add` at a time. Fully **Exit** from the tray (cl
 To bypass the Desktop wrapper, run the matching DSH CLI in a normal terminal:
 
 ```powershell
-npx --yes @deepseek-ai/dsh@0.1.5-rc.1 plugin --profile desktop add --force github:lincong1987/dsh-model-switch
+dsh plugin --profile desktop add --force github:SA2687890878/dsh-model-switch
 ```
 
 ## Use
@@ -117,7 +88,7 @@ The model selected in the plan review panel takes priority over the saved plan-e
 
 ## Compatibility
 
-Requires DeepSeek Harness **0.1.5-rc.1** or later. Settings are stored in the host settings document through the plugin's registered `model-switch` namespace.
+Built and typechecked against DeepSeek Harness **0.2.0-rc.2** (peer range `^0.2.0-rc.2`). Settings are the plugin entry's validated `Config`, persisted through DSH's settings Remote under the loader entry id `model-switch`.
 
 Subagent model switching applies to in-process subagents such as `spawn` and `fork`. External-process agents may manage their models independently.
 

@@ -3,7 +3,7 @@
  */
 
 import type { Context } from '@deepseek-ai/cordis'
-import type { ClientRemote, SessionId, SubagentAddress } from '@deepseek-ai/dsh-api-remotes/client'
+import type { ClientRemote, SessionId } from '@deepseek-ai/dsh-api-remotes/client'
 import type { ISessions } from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
@@ -13,9 +13,8 @@ import type {} from '@deepseek-ai/dsh-api-session-controller/client'
 import type {} from '@deepseek-ai/dsh-client-ui-session/client'
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ModelSelection } from '@deepseek-ai/dsh-api-remotes/client'
-import { MODEL_SWITCH_NS, type Config } from '../shared.ts'
 import { en, zh, type LocaleKey } from './locales.ts'
-import { ConfigStore } from './config-store.ts'
+import { ConfigStore, type ConfigSettingsRemote } from './config-store.ts'
 import { SettingsSection, type SettingsInjected } from './SettingsSection.tsx'
 import {
   PlanReviewComposer,
@@ -23,18 +22,12 @@ import {
   type PlanReviewComposerInjected,
 } from './PlanReviewComposer.tsx'
 import { SubagentModelBadge, type SubagentModelBadgeInjected } from './SubagentModelBadge.tsx'
-import {
-  SubagentCatalogAction,
-  type SubagentCatalogInjected,
-} from './SubagentCatalogAction.tsx'
 import { SessionLabelStore } from './session-label-store.ts'
 import type { ModelCatalogAccess } from './ModelPicker.tsx'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     'model-switch': LocaleKey
-    /** Reuse stock ui-subagent dictionaries when replacing the catalog seat. */
-    'subagent': string
   }
 }
 
@@ -46,7 +39,7 @@ export const inject = [
   'sessions',
   'remote',
   'remote.session',
-  'settingsScope',
+  'remote.settings',
 ]
 
 export function apply(ctx: Context): void {
@@ -57,10 +50,25 @@ export function apply(ctx: Context): void {
   // merge (it loads first through workspace types); the runtime service here is
   // the client ISessions implementation, so retype at the single access point.
   const sessions = ctx.sessions as unknown as ISessions
-  const store = new ConfigStore(ctx.settingsScope.bind<Config>({ namespace: MODEL_SWITCH_NS }))
+  const remote = ctx.remote as ClientRemote & ConfigSettingsRemote
+  const store = new ConfigStore(remote)
   const labels = new SessionLabelStore()
 
-  const remote = ctx.remote as ClientRemote
+  ctx.effect(() => {
+    const refresh = (): void => {
+      void store.refresh().catch((cause: unknown) => {
+        console.warn('dsh-model-switch: failed to refresh settings', cause)
+      })
+    }
+    const offSettings = remote.$on('settings/document-updated', refresh)
+    const offConnection = ctx.on('connection/reset', refresh)
+    refresh()
+    return () => {
+      offSettings()
+      offConnection()
+    }
+  }, 'model-switch: settings mirror')
+
   const currentSelection = (sessionId: SessionId): ModelSelection | undefined => {
     const row = sessions.list.getSnapshot().byId[sessionId]
     const selection = row?.projectionValues?.modelSelection
@@ -120,26 +128,4 @@ export function apply(ctx: Context): void {
     inject: badgeInject,
   }, SubagentModelBadge))
 
-  const catalogInject = (): SubagentCatalogInjected => ({
-    openChild(address: SubagentAddress) {
-      sessions.openSubagent(address)
-    },
-    refresh(parentSessionId: SessionId) {
-      void sessions.refreshSubagents(parentSessionId)
-    },
-    setCatalogOpen(parentSessionId: SessionId, open: boolean) {
-      sessions.setSubagentCatalogOpen(parentSessionId, open)
-    },
-    labels,
-  })
-
-  // Same id as stock ui-subagent entry; lower priority shadows it (lowest renders).
-  ctx.slots.inject('conversation.session.header.actions', () => ctx.slots.register({
-    name: 'conversation.session.header.actions',
-    id: 'subagent-catalog',
-    order: 10,
-    priority: -1,
-    locale: 'subagent',
-    inject: catalogInject,
-  }, SubagentCatalogAction))
 }

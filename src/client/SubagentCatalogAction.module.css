@@ -11,7 +11,7 @@
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   font-size: 12px;
   line-height: 18px;
   cursor: pointer;
@@ -55,10 +55,10 @@
   padding: 4px;
   overflow: auto;
   border-radius: 12px;
-  background: var(--dsw-specific-menu);
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
-  box-shadow: var(--dsw-shadow-lv3);
+  background: var(--dsw-alias-bg-overlay);
+  --dsh-scrollbar-thumb: var(--dsw-alias-border-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-border-l1);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--dsw-alias-label-primary) 14%, transparent);
 }
 
 .node {
@@ -91,7 +91,7 @@
 
 .row:hover > .clickarea,
 .row:focus-visible > .clickarea {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-alias-bg-layer-2);
 }
 
 .clickarea {
@@ -113,7 +113,7 @@
 }
 
 .disabled {
-  color: var(--dsw-alias-label-dimmed);
+  color: var(--dsw-alias-label-secondary);
   cursor: not-allowed;
 }
 
@@ -139,7 +139,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   cursor: pointer;
   transition: transform 120ms ease;
 }
@@ -173,7 +173,7 @@
 
 .summary,
 .metrics {
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   font-size: 11px;
   line-height: 16px;
 }
@@ -195,7 +195,7 @@
 .metricModel {
   max-width: 100%;
   overflow: hidden;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   font-size: 11px;
   line-height: 16px;
   font-weight: 500;
@@ -256,7 +256,7 @@
 .notice,
 .error {
   padding: 10px 12px;
-  color: var(--dsw-alias-label-tertiary);
+  color: var(--dsw-alias-label-secondary);
   font-size: 12px;
   line-height: 18px;
 }
@@ -283,5 +283,5 @@
 }
 
 .refresh:hover {
-  background: var(--dsw-alias-interactive-bg-hover);
+  background: var(--dsw-alias-bg-layer-2);
 }

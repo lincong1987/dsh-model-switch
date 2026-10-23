@@ -1,0 +1,21 @@
+.stateDot {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--dsw-alias-state-idle-primary);
+}
+
+.stateDot[data-state='ongoing'] {
+  background: var(--dsw-alias-brand-primary);
+}
+
+.stateDot[data-state='done'] {
+  background: var(--dsw-alias-state-success-primary);
+}
+
+.stateDot[data-state='error'] {
+  background: var(--dsw-alias-state-error-primary);
+}

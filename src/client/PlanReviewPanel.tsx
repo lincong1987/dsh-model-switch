@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconEditOutline16 } from './UiGlyphs.tsx'
 import type {
   ClientRemote,
   ModelSelection,
@@ -17,6 +17,8 @@ import type { ModelSelectionConfig } from '../shared.ts'
 import { resolveCustomSelection, resolvePlanExecuteSelection } from '../shared.ts'
 import { ConfigStore } from './config-store.ts'
 import { ModelPicker, type ModelCatalogAccess } from './ModelPicker.tsx'
+import { executeWithTemporaryModel } from './plan-execution.ts'
+import { PlanMarkdown } from './PlanMarkdown.tsx'
 import type { LocaleKey } from './locales.ts'
 import css from './styles.module.css'
 
@@ -33,12 +35,6 @@ export interface PlanReviewPanelProps {
 
 function tooltip(description: string | undefined): { title?: string } {
   return description === undefined ? {} : { title: description }
-}
-
-function sameSelection(a: ModelSelectionConfig, b: ModelSelection): boolean {
-  return a.provider === b.provider
-    && a.model === b.model
-    && (a.reasoningEffort ?? undefined) === (b.reasoningEffort ?? undefined)
 }
 
 async function selectModel(
@@ -94,11 +90,6 @@ export function PlanReviewPanel({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const markdownLabels = useMemo(() => ({
-    code: { copyLabel: t('codeCopy'), copiedLabel: t('codeCopied') },
-    footnotes: t('footnotes'),
-  }), [t])
-
   useEffect(() => {
     if (!settingsReady || pickerReady) return
     setPanelSelection(settingsSelection)
@@ -117,30 +108,28 @@ export function PlanReviewPanel({
   const approve = (): void => {
     settle(async () => {
       const effective = resolvePlanExecuteSelection(snap.value, panelSelection)
-      let previous: ModelSelectionConfig | undefined
-      let switched = false
-
-      if (effective !== undefined) {
-        previous = toConfig(access.currentSelection(pending.sessionId))
-        if (previous === undefined || !sameSelection(effective, previous)) {
-          await selectModel(remote, pending.sessionId, effective)
-          switched = true
-        }
+      const answer = () => pending.answer({
+        answers: [{ id: review.id, selected: [review.approve.label] }],
+      })
+      if (effective === undefined) {
+        await answer()
+        return
       }
 
-      await pending.answer({ answers: [{ id: review.id, selected: [review.approve.label] }] })
-
-      if (switched && previous !== undefined) {
-        try {
-          await waitSessionIdle(pending.sessionId, isSessionRunning)
-          await selectModel(remote, pending.sessionId, previous)
-        } catch (cause: unknown) {
-          console.warn(
-            'dsh-model-switch: failed to restore main session model after plan execute',
-            cause,
-          )
-        }
-      }
+      const previous = toConfig(access.currentSelection(pending.sessionId))
+        ?? toConfig((await access.loadCatalog()).default)
+      await executeWithTemporaryModel({
+        current: previous,
+        selected: effective,
+        setModel: selection => selectModel(remote, pending.sessionId, selection),
+        waitUntilIdle: () => waitSessionIdle(pending.sessionId, isSessionRunning),
+        execute: answer,
+        onRestoreError: (cause) => {
+          console.warn('dsh-model-switch: failed to restore main session model after plan execute', cause)
+          const detail = cause instanceof Error ? cause.message : String(cause)
+          setError(`${t('restoreError')}: ${detail}`)
+        },
+      })
     })
   }
 
@@ -158,28 +147,30 @@ export function PlanReviewPanel({
           {t('planHeader')}
         </div>
         <div className={css.body} data-plan-review-scroll>
-          <MarkdownText text={review.plan} labels={markdownLabels} />
+          <PlanMarkdown text={review.plan} />
         </div>
         <div className={css.footer}>
           <div className={css.feedback} role="status">{error}</div>
           <div className={css.actions}>
-            <Button
-              variant="ghost"
-              icon={<IconEditOutline16 size={14} />}
+            <button
+              type="button"
+              className={`${css.planButton} ${css.planButtonGhost}`}
               disabled={busy}
-              onClick={() => { settle(() => pending.cancel()) }}
+              onClick={() => { settle(() => pending.dismiss()) }}
             >
+              <IconEditOutline16 />
               {t('planDiscuss')}
-            </Button>
+            </button>
             {decline !== undefined && (
-              <Button
-                variant="outline"
+              <button
+                type="button"
+                className={`${css.planButton} ${css.planButtonOutline}`}
                 {...tooltip(decline.description)}
                 disabled={busy}
                 onClick={() => { decide(decline.label) }}
               >
                 {t('planDecline')}
-              </Button>
+              </button>
             )}
             <div className={css.planPicker} aria-label={t('planModelLabel')}>
               {pickerReady ? (
@@ -194,14 +185,15 @@ export function PlanReviewPanel({
                 />
               ) : null}
             </div>
-            <Button
-              variant="primary"
+            <button
+              type="button"
+              className={`${css.planButton} ${css.planButtonPrimary}`}
               {...tooltip(review.approve.description)}
               disabled={busy || !pickerReady}
               onClick={() => { approve() }}
             >
               {t('planApprove')}
-            </Button>
+            </button>
           </div>
         </div>
       </section>

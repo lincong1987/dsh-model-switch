@@ -31,19 +31,16 @@
 
 ### 查看子代理使用的模型
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/subagent.png" alt="子代理模型概览" /></td>
-    <td width="50%"><img src="docs/subagent-detail.png" alt="子代理模型详情" /></td>
-  </tr>
-</table>
+打开子代理会话后，可在会话标题栏查看模型、上下文窗口和思考等级。
+
+<img src="docs/subagent-detail.png" alt="会话标题栏中的子代理模型徽标" width="720" />
 
 ## 安装
 
-请使用 GitHub 安装源。本插件未发布到 npm，不要使用 `@lincong1987/dsh-model-switch`。
+请使用此 fork 的 GitHub 安装源；本插件未发布到 npm。
 
 ```bash
-dsh plugin --profile web add github:lincong1987/dsh-model-switch
+dsh plugin --profile web add github:SA2687890878/dsh-model-switch
 ```
 
 将 `web` 换成 DSH 实际正在使用的 profile。DeepSeek Harness Desktop 一般是 `desktop`。
@@ -52,47 +49,21 @@ dsh plugin --profile web add github:lincong1987/dsh-model-switch
 
 ## 如何更新 DSH
 
-本插件需要 DeepSeek Harness **0.1.5-rc.1** 或更高版本。DSH 没有 `dsh update` 命令，按你当初的安装方式再装一次目标版本即可。
+本 fork 已在 DeepSeek Harness **0.2.0-rc.2** 上构建并通过类型检查；清单声明的 peer 范围为 `^0.2.0-rc.2`，本次没有对范围外版本做运行时验证。
 
-1. 查看当前版本，以及 npm 上实际发布的标签：
+更新 DSH 时请使用你当前安装渠道提供的版本。Desktop 自带打包版 `dsh`，应通过应用内更新；更新 npm / `npx` 不会替换 Desktop 内置版本。跨越可能改变磁盘格式的 DSH 版本前，先按发行说明操作并备份 `~/.dsh`（Windows：`%USERPROFILE%\.dsh`）。
 
-```bash
-dsh --version
-npm view @deepseek-ai/dsh dist-tags
-```
-
-截至 2026-09-10，`latest` 指向 `0.1.5-rc.1`（即本插件当前适配的版本），`next` 指向 `0.1.5-rc.2`，`alpha` 标签指向 `0.1.5-alpha.2`。需要可复现安装时，请固定完整版本号（`@0.1.5-rc.1`）。
-
-2. **npx（Web）：**
-
-```bash
-npx --yes @deepseek-ai/dsh@0.1.5-rc.1 web
-```
-
-3. **全局 npm 安装：**
-
-```bash
-npm install -g @deepseek-ai/dsh@0.1.5-rc.1
-dsh --version
-```
-
-然后重启 `dsh web`。DSH 需要 Node.js `^22.19.0` 或 `>=24`。
-
-4. **Desktop：** 先从托盘完全 **退出**，再在应用里使用 **检查更新**（或安装更新的 Desktop 安装包）。Desktop 自带一份打包好的 `dsh`，更新 npm / `npx` 不会替换这份副本。Desktop 更新完成后请再重启一次。
-
-DSH 仍处于开发者预览阶段，版本之间可能改磁盘存储格式。跨版本升级前请备份 `~/.dsh`（Windows：`%USERPROFILE%\.dsh`）。特别是 0.1.0-rc.8 改用了不兼容的 SQLite 存储格式；0.1.2-alpha.3 则彻底移除了可选的 SQLite 会话后端（旧数据保留，但需要旧版本才能导出）。跨过这些版本边界时，应把本地会话视为不可直接迁移。0.1.2-alpha.5 修复了从 0.1.1-rc.2 或 0.1.2-alpha.3 升级的问题（应用可以正常启动，会话列表标题不再丢失）；0.1.5-rc.1 是当前插件适配的 release candidate 版本线。
-
-DSH 升到兼容版本后，按下一节重装本插件。
+升级 DSH 后，按下一节用 `--force` 重装此 fork。
 
 ## 重装 / DSH 更新后如何安装
 
-在本仓库有新版本，或你升级了 DeepSeek Harness 之后，请重装插件。插件会跟随特定 DSH 版本（当前为 **0.1.5-rc.1** 或更高），宿主升级后应再装一次插件。
+本仓库更新或升级 DSH 后，请重装插件。本次改动已在 **0.2.0-rc.2** 上构建并通过类型检查；后续版本未在本次修改中进行运行时验证。
 
 1. 先更新 DSH（见 [如何更新 DSH](#如何更新-dsh)；如果只是插件更新，可跳过这一步）。
 2. 使用 `--force` 重装，让 DSH 重新拉取 GitHub 源：
 
 ```bash
-dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
+dsh plugin --profile web add --force github:SA2687890878/dsh-model-switch
 ```
 
 3. 重启 DSH。
@@ -102,7 +73,7 @@ dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
 若要绕过 Desktop 包装器，可在普通终端里直接跑对应版本的 DSH CLI：
 
 ```powershell
-npx --yes @deepseek-ai/dsh@0.1.5-rc.1 plugin --profile desktop add --force github:lincong1987/dsh-model-switch
+dsh plugin --profile desktop add --force github:SA2687890878/dsh-model-switch
 ```
 
 ## 使用
@@ -117,7 +88,7 @@ npx --yes @deepseek-ai/dsh@0.1.5-rc.1 plugin --profile desktop add --force githu
 
 ## 兼容性
 
-需要 DeepSeek Harness **0.1.5-rc.1** 或更高版本。设置通过插件注册的 `model-switch` 命名空间写入宿主设置文档。
+本版本在 DeepSeek Harness **0.2.0-rc.2** 上构建并通过类型检查（peer 范围 `^0.2.0-rc.2`）。设置属于插件入口经过校验的 `Config`，通过 DSH settings Remote 写入 id 为 `model-switch` 的 Loader 项。
 
 子代理模型切换适用于 `spawn`、`fork` 等进程内子代理。外部进程代理可能独立管理自己的模型。
 
