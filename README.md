@@ -37,10 +37,10 @@ Open a subagent session to see its model, context window, and reasoning effort i
 
 ## Install
 
-Use the GitHub spec for this fork. It is not published as an npm package.
+Use the GitHub spec. This plugin is not published as an npm package, so do not use `@lincong1987/dsh-model-switch`.
 
 ```bash
-dsh plugin --profile web add github:SA2687890878/dsh-model-switch
+dsh plugin --profile web add github:lincong1987/dsh-model-switch
 ```
 
 Replace `web` with the profile DSH is actually running. DeepSeek Harness Desktop typically uses `desktop`.
@@ -49,21 +49,21 @@ Restart DSH after installation.
 
 ## Update DSH
 
-This fork has been typechecked and built against DeepSeek Harness **0.2.0-rc.2**. The manifest declares the compatible peer range `^0.2.0-rc.2`; later releases are not runtime-tested by this change.
+This plugin has been typechecked and built against DeepSeek Harness **0.2.0-rc.2**. The manifest declares the compatible peer range `^0.2.0-rc.2`; later releases are not runtime-tested by this change.
 
 If you upgrade DSH, use the normal channel for that installation. Desktop updates its bundled DSH through the app updater; updating npm or `npx` does not replace Desktop's copy. Follow DSH release notes and back up `~/.dsh` (Windows: `%USERPROFILE%\.dsh`) before crossing a release that changes on-disk formats.
 
-After a DSH upgrade, reinstall this fork with `--force` as described below.
+After a DSH upgrade, reinstall this plugin with `--force` as described below.
 
 ## Reinstall / after a DSH update
 
-Reinstall the plugin when this fork changes, or after you upgrade DeepSeek Harness. This change was verified against **0.2.0-rc.2**; the package peer range is `^0.2.0-rc.2`.
+Reinstall the plugin when this repository changes, or after you upgrade DeepSeek Harness. This change was verified against **0.2.0-rc.2**; the package peer range is `^0.2.0-rc.2`.
 
 1. Update DSH first (see [Update DSH](#update-dsh); skip this step if only the plugin changed).
 2. Reinstall with `--force` so DSH refreshes the GitHub source:
 
 ```bash
-dsh plugin --profile web add --force github:SA2687890878/dsh-model-switch
+dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
 ```
 
 3. Restart DSH.
@@ -73,7 +73,7 @@ On Desktop, run **one** `plugin add` at a time. Fully **Exit** from the tray (cl
 To bypass the Desktop wrapper, run the matching DSH CLI in a normal terminal:
 
 ```powershell
-dsh plugin --profile desktop add --force github:SA2687890878/dsh-model-switch
+dsh plugin --profile desktop add --force github:lincong1987/dsh-model-switch
 ```
 
 ## Use

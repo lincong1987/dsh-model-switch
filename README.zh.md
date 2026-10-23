@@ -37,10 +37,10 @@
 
 ## 安装
 
-请使用此 fork 的 GitHub 安装源；本插件未发布到 npm。
+请使用 GitHub 安装源。本插件未发布到 npm，不要使用 `@lincong1987/dsh-model-switch`。
 
 ```bash
-dsh plugin --profile web add github:SA2687890878/dsh-model-switch
+dsh plugin --profile web add github:lincong1987/dsh-model-switch
 ```
 
 将 `web` 换成 DSH 实际正在使用的 profile。DeepSeek Harness Desktop 一般是 `desktop`。
@@ -49,11 +49,11 @@ dsh plugin --profile web add github:SA2687890878/dsh-model-switch
 
 ## 如何更新 DSH
 
-本 fork 已在 DeepSeek Harness **0.2.0-rc.2** 上构建并通过类型检查；清单声明的 peer 范围为 `^0.2.0-rc.2`，本次没有对范围外版本做运行时验证。
+本插件已在 DeepSeek Harness **0.2.0-rc.2** 上构建并通过类型检查；清单声明的 peer 范围为 `^0.2.0-rc.2`，本次没有对范围外版本做运行时验证。
 
 更新 DSH 时请使用你当前安装渠道提供的版本。Desktop 自带打包版 `dsh`，应通过应用内更新；更新 npm / `npx` 不会替换 Desktop 内置版本。跨越可能改变磁盘格式的 DSH 版本前，先按发行说明操作并备份 `~/.dsh`（Windows：`%USERPROFILE%\.dsh`）。
 
-升级 DSH 后，按下一节用 `--force` 重装此 fork。
+升级 DSH 后，按下一节用 `--force` 重装本插件。
 
 ## 重装 / DSH 更新后如何安装
 
@@ -63,7 +63,7 @@ dsh plugin --profile web add github:SA2687890878/dsh-model-switch
 2. 使用 `--force` 重装，让 DSH 重新拉取 GitHub 源：
 
 ```bash
-dsh plugin --profile web add --force github:SA2687890878/dsh-model-switch
+dsh plugin --profile web add --force github:lincong1987/dsh-model-switch
 ```
 
 3. 重启 DSH。
@@ -73,7 +73,7 @@ dsh plugin --profile web add --force github:SA2687890878/dsh-model-switch
 若要绕过 Desktop 包装器，可在普通终端里直接跑对应版本的 DSH CLI：
 
 ```powershell
-dsh plugin --profile desktop add --force github:SA2687890878/dsh-model-switch
+dsh plugin --profile desktop add --force github:lincong1987/dsh-model-switch
 ```
 
 ## 使用

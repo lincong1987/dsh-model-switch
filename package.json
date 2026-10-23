@@ -30,13 +30,13 @@
     "name": "lincong",
     "url": "https://github.com/lincong1987"
   },
-  "homepage": "https://github.com/SA2687890878/dsh-model-switch#readme",
+  "homepage": "https://github.com/lincong1987/dsh-model-switch#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SA2687890878/dsh-model-switch.git"
+    "url": "git+https://github.com/lincong1987/dsh-model-switch.git"
   },
   "bugs": {
-    "url": "https://github.com/SA2687890878/dsh-model-switch/issues"
+    "url": "https://github.com/lincong1987/dsh-model-switch/issues"
   },
   "keywords": [
     "dsh",
